@@ -29,6 +29,7 @@ byte  OpenGarage::led_reverse = 0;
 byte  OpenGarage::dirty_bits = 0xFF;
 Ticker ud_ticker;
 
+
 static const char* config_fname = CONFIG_FNAME;
 static const char* log_fname = LOG_FNAME;
 
@@ -43,7 +44,9 @@ extern OpenGarage og;
  */
 OptionStruct OpenGarage::options[] = {
   {"fwv", OG_FWV,      255, ""},
-  {"mnt", OG_MNT_CEILING,3, ""},
+  {"sn1", OG_SN1_CEILING,1, ""},
+  {"sn2", OG_SN2_NONE,   2, ""},
+  {"sno", OG_SNO_1ONLY,	 3, ""},
   {"dth", 50,        65535, ""},
   {"vth", 150,       65535, ""},
   {"riv", 5,           300, ""},
@@ -54,6 +57,8 @@ OptionStruct OpenGarage::options[] = {
   {"htp", 80,        65535, ""},
   {"cdt", 1000,       5000, ""},
   {"dri", 500,        3000, ""},
+  {"sfi", OG_SFI_CONSENSUS,1,""},
+  {"cmr", 10,          100, ""},
   {"sto", 0,             1, ""},
   {"mod", OG_MOD_AP,   255, ""},
   {"ati", 30,          720, ""},
@@ -70,11 +75,15 @@ OptionStruct OpenGarage::options[] = {
   {"dkey", 0, 0, DEFAULT_DKEY},
   {"name", 0, 0, DEFAULT_NAME},
   {"iftt", 0, 0, ""},
-  {"mqtt", 0, 0, "-.-.-.-"},
-  {"dvip", 0, 0, "-.-.-.-"},
-  {"gwip", 0, 0, "-.-.-.-"},
+  {"mqtt", 0, 0, ""},
+  {"mqur", 0, 0, ""},
+  {"mqpw", 0, 0, ""},
+  {"mqtp", 0, 0, ""},
+  {"dvip", 0, 0, ""},
+  {"gwip", 0, 0, ""},
   {"subn", 0, 0, "255.255.255.0"},
-  {"dns1", 0, 0, "8.8.8.8"}
+  {"dns1", 0, 0, "8.8.8.8"},
+  {"ntp1", 0, 0, "pool.ntp.org"},
 };
 
 /* Variables and functions for handling Ultrasonic Distance sensor */
@@ -122,7 +131,7 @@ ICACHE_RAM_ATTR void ud_isr() {
 }
 
 void ud_ticker_cb() {
-  ud_start_trigger();
+	ud_start_trigger();
 }
     
 void OpenGarage::begin() {
@@ -164,18 +173,21 @@ void OpenGarage::begin() {
   
   state = OG_STATE_INITIAL;
   
-  if(!SPIFFS.begin()) {
+  if(!FILESYS.begin()) {
     DEBUG_PRINTLN(F("failed to mount file system!"));
   }
 }
 
 void OpenGarage::options_setup() {
   int i;
-  if(!SPIFFS.exists(config_fname)) { // if config file does not exist
+  if(!FILESYS.exists(config_fname)) { // if config file does not exist
+  	DEBUG_PRINTLN(F("create config file"));
     options_save(); // save default option values
     return;
-  } 
+  }
+  DEBUG_PRINTLN(F("load options"));
   options_load();
+  DEBUG_PRINTLN(F("done"));
   
   if(options[OPTION_FWV].ival != OG_FWV)  {
     // if firmware version has changed
@@ -189,7 +201,7 @@ void OpenGarage::options_setup() {
 
 void OpenGarage::options_reset() {
   DEBUG_PRINT(F("reset to factory default..."));
-  if(!SPIFFS.remove(config_fname)) {
+  if(!FILESYS.remove(config_fname)) {
     DEBUG_PRINTLN(F("failed to remove config file"));
     return;
   }else{DEBUG_PRINTLN(F("Removed config file"));}
@@ -197,7 +209,7 @@ void OpenGarage::options_reset() {
 }
 
 void OpenGarage::log_reset() {
-  if(!SPIFFS.remove(log_fname)) {
+  if(!FILESYS.remove(log_fname)) {
     DEBUG_PRINTLN(F("failed to remove log file"));
     return;
   }else{DEBUG_PRINTLN(F("Removed log file"));}
@@ -214,7 +226,7 @@ int OpenGarage::find_option(String name) {
 }
 
 void OpenGarage::options_load() {
-  File file = SPIFFS.open(config_fname, "r");
+  File file = FILESYS.open(config_fname, "r");
   DEBUG_PRINT(F("loading config file..."));
   if(!file) {
     DEBUG_PRINTLN(F("failed"));
@@ -227,7 +239,8 @@ void OpenGarage::options_load() {
     sval.trim();
     DEBUG_PRINT(name);
     DEBUG_PRINT(":");
-    DEBUG_PRINTLN(sval);
+    DEBUG_PRINT(sval);
+    DEBUG_PRINT(F(" | "));
     nopts++;
     if(nopts>NUM_OPTIONS+1) break;
     int idx = find_option(name);
@@ -238,12 +251,11 @@ void OpenGarage::options_load() {
       options[idx].sval = sval;
     }
   }
-  DEBUG_PRINTLN(F("ok"));
   file.close();
 }
 
 void OpenGarage::options_save() {
-  File file = SPIFFS.open(config_fname, "w");
+  File file = FILESYS.open(config_fname, "w");
   DEBUG_PRINTLN(F("saving config file..."));  
   if(!file) {
     DEBUG_PRINTLN(F("failed"));
@@ -264,27 +276,49 @@ void OpenGarage::options_save() {
 
 uint OpenGarage::read_distance() {
   byte i;
-  //unsigned long _time = 0;
+  static uint last_returned;
   uint32_t buf[KAVG];
-  noInterrupts(); // turn off interrupts while we read buffer
-  if(!fullbuffer) return ud_i>0? (uint)(ud_buffer[ud_i-1]*0.01716f) : 0;
-  // copy ud_buffer to local buffer
-  for(i=0;i<KAVG;i++) {
-    buf[i] = ud_buffer[i];
+  if(!fullbuffer) {
+  	last_returned = (ud_i>0)? (uint)(ud_buffer[ud_i-1]*0.01716f) : 0;
+  	return last_returned;
   }
-  interrupts();
-  // partial sorting of buf to perform median filtering
-  byte out, in;
-  for(out=1; out<=KAVG/2; out++){ 
-    uint32_t temp = buf[out];
-    in = out;
-    while(in>0 && buf[in-1]>temp) {
-      buf[in] = buf[in-1]; 
-      in--;
-    }
-    buf[in] = temp;   
-  }  
-  return (uint)(buf[KAVG/2]*0.01716f);  // 34320 cm / 2 / 10^6 s
+  for(byte i=0;i<KAVG;i++) {
+  	buf[i] = ud_buffer[i];
+  }
+	
+	// noise filtering methods
+	if(options[OPTION_SFI].ival == OG_SFI_MEDIAN) {
+		// partial sorting of buf to perform median filtering
+		byte out, in;
+		for(out=1; out<=KAVG/2; out++){ 
+		  uint32_t temp = buf[out];
+		  in = out;
+		  while(in>0 && buf[in-1]>temp) {
+		    buf[in] = buf[in-1]; 
+		    in--;
+		  }
+		  buf[in] = temp;   
+		}
+		last_returned = (uint)(buf[KAVG/2]*0.01716f);  // 34320 cm / 2 / 10^6 s
+		return last_returned;
+	} else {
+		// use consensus algorithm
+		uint32_t vmin, vmax, sum;
+		vmin = vmax = sum = buf[0];
+		for(byte i=1;i<KAVG;i++) {
+			uint32_t v = buf[i];
+			vmin = (v<vmin)?v:vmin;
+			vmax = (v>vmax)?v:vmax;
+			sum += v;
+		}
+		// calculate margin
+		uint32_t margin = (float)options[OPTION_CMR].ival/0.01716f;
+		margin = (margin<60)?60:margin;
+		if(vmax-vmin<=margin) {
+			last_returned = (sum/KAVG)*0.01716f;
+		}
+		return last_returned;
+	}
 }
 
 void OpenGarage::init_sensors() {
@@ -359,8 +393,8 @@ void OpenGarage::write_log(const LogStruct& data) {
   File file;
   uint curr = 0;
   DEBUG_PRINTLN(F("saving log data..."));  
-  if(!SPIFFS.exists(log_fname)) {  // create log file
-    file = SPIFFS.open(log_fname, "w");
+  if(!FILESYS.exists(log_fname)) {  // create log file
+    file = FILESYS.open(log_fname, "w");
     if(!file) {
       DEBUG_PRINTLN(F("failed"));
       return;
@@ -375,7 +409,7 @@ void OpenGarage::write_log(const LogStruct& data) {
       file.write((const byte*)&l, sizeof(LogStruct));
     }
   } else {
-    file = SPIFFS.open(log_fname, "r+");
+    file = FILESYS.open(log_fname, "r+");
     if(!file) {
       DEBUG_PRINTLN(F("failed"));
       return;
@@ -395,7 +429,7 @@ void OpenGarage::write_log(const LogStruct& data) {
 
 bool OpenGarage::read_log_start() {
   if(log_file) log_file.close();
-  log_file = SPIFFS.open(log_fname, "r");
+  log_file = FILESYS.open(log_fname, "r");
   if(!log_file) return false;
   uint curr;
   if(log_file.readBytes((char*)&curr, sizeof(curr)) != sizeof(curr)) return false;
@@ -417,10 +451,9 @@ bool OpenGarage::read_log_end() {
 
 void OpenGarage::play_note(uint freq) {
   if(freq>0) {
-    analogWrite(PIN_BUZZER, 512);
-    analogWriteFreq(freq);
+    tone(PIN_BUZZER, freq);
   } else {
-    analogWrite(PIN_BUZZER, 0);
+    noTone(PIN_BUZZER);
   }
 }
 
@@ -442,10 +475,10 @@ void OpenGarage::play_startup_tune() {
   static byte duration[] = {4, 8, 8, 8};
   
   for (byte i = 0; i < sizeof(melody)/sizeof(uint); i++) {
-    uint delaytime = 1000/duration[i];
-    play_note(melody[i]);
-    delay(delaytime);
-    play_note(0);
-    delay(delaytime * 0.2);    // add 30% pause between notes
+    uint noteTime = 1000/duration[i];
+    tone(PIN_BUZZER, melody[i], noteTime);
+    uint delayTime = noteTime * 1.2f;
+    delay(delayTime);
+    noTone(PIN_BUZZER);
   }
 }

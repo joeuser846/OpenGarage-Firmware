@@ -47,19 +47,22 @@ static Ticker restart_ticker;
 
 static WiFiClient wificlient;
 PubSubClient mqttclient(wificlient);
+String mqtt_topic;
+String mqtt_id;
 
 static String scanned_ssids;
 static byte read_cnt = 0;
 static uint distance = 0;
-static uint vdistance = 0;
+static byte sn2_value = 0;
 static float tempC = 0;
 static float humid = 0;
-static byte door_status = 0; //0 down, 1 up
-static int vehicle_status = 0; //0 No, 1 Yes, 2 Unknown (door open), 3 Option Disabled
+static byte door_status = 0; //0: closed, 1: open
+static int vehicle_status = OG_VEH_ABSENT;
 static bool curr_cloud_access_en = false;
 static uint led_blink_ms = LED_FAST_BLINK;
 static ulong justopen_timestamp = 0;
 static byte curr_mode;
+extern bool fullbuffer;
 // this is one byte storing the door status histogram
 // maximum 8 bits
 static byte door_status_hist = 0;
@@ -107,6 +110,11 @@ byte findKeyVal (const char *str, const char *key, char *strbuf=NULL, uint8_t ma
     }
   }
   return(i); // return the length of the value
+}
+
+// this is simplified version to check if MQTT / NTP server is valid domain name
+bool valid_url(String s) {
+	return (s.length()>0 && s[0]!='-' && s.indexOf('.')>0);
 }
 
 void server_send_html_P(PGM_P content) {
@@ -298,26 +306,32 @@ String get_ip() {
   return ip;
 }
 
-void sta_controller_fill_json(String& json) {
+void sta_controller_fill_json(String& json, bool fullversion=true) {
   json = "";
   json += F("{\"dist\":");
   json += distance;
+  if(og.options[OPTION_SN2].ival>OG_SN2_NONE) {
+		json += F(",\"sn2\":");
+		json += sn2_value;
+  }
   json += F(",\"door\":");
   json += door_status;
   json += F(",\"vehicle\":");
   json += vehicle_status;
   json += F(",\"rcnt\":");
   json += read_cnt;
-  json += F(",\"fwv\":");
-  json += og.options[OPTION_FWV].ival;
-  json += F(",\"name\":\"");
-  json += og.options[OPTION_NAME].sval;
-  json += F("\",\"mac\":\"");
-  json += get_mac();
-  json += F("\",\"cid\":");
-  json += ESP.getChipId();
-  json += F(",\"rssi\":");
-  json += (int16_t)WiFi.RSSI();
+  if(fullversion) {
+		json += F(",\"fwv\":");
+		json += og.options[OPTION_FWV].ival;
+		json += F(",\"name\":\"");
+		json += og.options[OPTION_NAME].sval;
+		json += F("\",\"mac\":\"");
+		json += get_mac();
+		json += F("\",\"cid\":");
+		json += ESP.getChipId();
+		json += F(",\"rssi\":");
+		json += (int16_t)WiFi.RSSI();
+	}
   if(og.options[OPTION_TSN].ival) {
   	json += F(",\"temp\":");
   	json += tempC;
@@ -345,6 +359,8 @@ void on_sta_debug() {
   json += og.options[OPTION_NAME].sval;
   json += F("\",\"mac\":\"");
   json += get_mac();
+  json += F("\",\"mqtt_topic\":\"");
+  json += mqtt_topic;
   json += F("\",\"cid\":");
   json += ESP.getChipId();
   json += F(",\"rssi\":");
@@ -365,6 +381,8 @@ void sta_logs_fill_json(String& json) {
   json += og.options[OPTION_NAME].sval;
   json += F("\",\"time\":");
   json += curr_utc_time;
+  json += F(",\"ncols\":");
+  json += og.options[OPTION_SN2].ival>OG_SN2_NONE ? 4 : 3;
   json += F(",\"logs\":[");
   if(!og.read_log_start()) {
     json += F("]}");
@@ -381,6 +399,10 @@ void sta_logs_fill_json(String& json) {
     json += l.status;
     json += F(",");
     json += l.dist;
+    if(og.options[OPTION_SN2].ival>OG_SN2_NONE) {
+	    json += F(",");
+	    json += l.sn2;
+	  }
     json += F("],");
   }
   og.read_log_end();
@@ -708,14 +730,16 @@ void on_ap_debug() {
 }
 
 // MQTT callback to read "Button" requests
-void mqtt_callback(const MQTT::Publish& pub) { 
+void mqtt_callback(char* topic, byte* payload, unsigned int length) { 
   //DEBUG_PRINT("MQTT Message Received: ");
   //DEBUG_PRINT(pub.topic());
   //DEBUG_PRINT(" Data: ");
   //DEBUG_PRINTLN(pub.payload_string());
 
   //Accept button on any topic for backwards compat with existing code - use IN messages below if possible
-  if (pub.payload_string() == "Button") {
+  String Payload = (char*)payload;
+  String Topic = (char*)topic;
+  if (Payload=="Button") {
     DEBUG_PRINTLN(F("MQTT Button request received, change door state"));
     if(!og.options[OPTION_ALM].ival) {
       // if alarm is not enabled, trigger relay right away
@@ -729,10 +753,10 @@ void mqtt_callback(const MQTT::Publish& pub) {
     }
   }
   //Accept click for consistency with api, open and close should be used instead, use IN topic if possible
-  if (pub.topic() == og.options[OPTION_NAME].sval +"/IN/STATE" ){
+  if (Topic==(mqtt_topic+"/IN/STATE")){
     DEBUG_PRINT(F("MQTT IN Message detected, check data for action, Data:"));
-    DEBUG_PRINTLN(pub.payload_string());
-    if ( (pub.payload_string() == "close" && door_status) || (pub.payload_string() == "open" && !door_status) || pub.payload_string() == "click") {
+    DEBUG_PRINTLN(Payload);
+    if ( (Payload == "close" && door_status) || (Payload == "open" && !door_status) || Payload == "click") {
       DEBUG_PRINTLN(F("Command is valid based on existing state, trigger change"));
       if(!og.options[OPTION_ALM].ival) {
         // if alarm is not enabled, trigger relay right away
@@ -744,12 +768,12 @@ void mqtt_callback(const MQTT::Publish& pub) {
         // else, set alarm
         og.set_alarm();
       }
-    }else if ( (pub.payload_string() == "close" && !door_status) || (pub.payload_string() == "open" && door_status) ){
+    }else if ( (Payload=="close" && !door_status) || (Payload=="open" && door_status) ){
       DEBUG_PRINTLN(F("Command request not valid, door already in requested state"));
     }
     else {
       DEBUG_PRINT(F("Unrecognized MQTT data/command:"));
-      DEBUG_PRINTLN(pub.payload_string());
+      DEBUG_PRINTLN(Payload);
     }
   }
 }
@@ -761,7 +785,7 @@ void do_setup()
     delete server;
     server = NULL;
   }
-  WiFi.persistent(false); // turn off persistent, fixing flash crashing issue
+	WiFi.persistent(false); // turn off persistent, fixing flash crashing issue
   og.begin();
   og.options_setup();
   og.init_sensors();
@@ -779,7 +803,6 @@ void do_setup()
     DEBUG_PRINTLN(og.options[OPTION_HTP].ival);
   }
   led_blink_ms = LED_FAST_BLINK;
-  
 }
 
 void process_ui()
@@ -939,21 +962,29 @@ void check_status_ap() {
   }
 }
 
-bool mqtt_connect_subscibe() {
+bool mqtt_connect_subscribe() {
   static ulong mqtt_subscribe_timeout = 0;
   if(curr_utc_time > mqtt_subscribe_timeout) {
     if (!mqttclient.connected()) {
       DEBUG_PRINT(F("MQTT Not connected- (Re)connect MQTT"));
-      mqttclient.set_server(og.options[OPTION_MQTT].sval, 1883);
-      if (mqttclient.connect(og.options[OPTION_NAME].sval)) {
-        mqttclient.set_callback(mqtt_callback); 		
-        mqttclient.subscribe(og.options[OPTION_NAME].sval);
-        mqttclient.subscribe(og.options[OPTION_NAME].sval +"/IN/#");
+      boolean ret;
+      if(og.options[OPTION_MQUR].sval.length()>0) { // if MQTT user name is defined
+      	DEBUG_PRINT(F("(with user name)"));
+      	ret = mqttclient.connect(mqtt_id.c_str(), og.options[OPTION_MQUR].sval.c_str(), og.options[OPTION_MQPW].sval.c_str());
+      }
+      else {
+      	DEBUG_PRINT(F("[w/o user name]"));      
+	      ret = mqttclient.connect(mqtt_id.c_str());
+	    }
+      if(ret) {
+        mqttclient.subscribe(mqtt_topic.c_str());
+        mqttclient.subscribe((mqtt_topic +"/IN/#").c_str());
         DEBUG_PRINTLN(F("......Success, Subscribed to MQTT Topic"));
+        mqtt_subscribe_timeout = curr_utc_time + 5; // if successful, don't check for 5 seconds
         return true;
       }else {
         DEBUG_PRINTLN(F("......Failed to Connect to MQTT"));
-        mqtt_subscribe_timeout = curr_utc_time + 50; //Takes about 5 seconds to get through the loop
+        mqtt_subscribe_timeout = curr_utc_time + 60; // if unsuccessful, try again in 60 seconds
         return false;
       }
     }
@@ -986,10 +1017,11 @@ void perform_notify(String s) {
   }
 
   //Mqtt notification
-  if(og.options[OPTION_MQTT].sval.length()>8) {
+  
+  if(valid_url(og.options[OPTION_MQTT].sval)) {
     if (mqttclient.connected()) {
         DEBUG_PRINTLN(" Sending MQTT Notification");
-        mqttclient.publish(og.options[OPTION_NAME].sval + "/OUT/NOTIFY",s); 
+        mqttclient.publish((mqtt_topic + "/OUT/NOTIFY").c_str(),s.c_str()); 
     }
   }
 }
@@ -1089,51 +1121,59 @@ void check_status() {
   if((curr_utc_time > checkstatus_timeout) || (checkstatus_timeout == 0))  { //also check on first boot
     og.set_led(HIGH);
     aux_ticker.once_ms(25, og.set_led, (byte)LOW);
-    uint threshold = og.options[OPTION_DTH].ival;
-    uint vthreshold = og.options[OPTION_VTH].ival;
-    if ((og.options[OPTION_MNT].ival == OG_MNT_SIDE) || (og.options[OPTION_MNT].ival == OG_MNT_CEILING)){
-      //sensor is ultrasonic
-      distance = og.read_distance();
-      door_status = (distance>threshold)?0:1; 
-      if (og.options[OPTION_MNT].ival == OG_MNT_SIDE){
-       door_status = 1-door_status;  // reverse logic for side mount
-       vehicle_status = 3;}
-      else {
-        if (vthreshold >0) {
-          if (!door_status) {
-            vdistance = distance;
-            vehicle_status = ((vdistance>threshold) && (vdistance <=vthreshold))?1:0;
-          }else{vehicle_status = 2;}
-        }else {vehicle_status = 3;}
-      }
-    }else if (og.options[OPTION_MNT].ival == OG_SWITCH_LOW){
-      vehicle_status= 3;
-      if (og.get_switch() == LOW){
-        //DEBUG_PRINTLN("Low Mount Switch reads LOW, setting distance to high value (indicating closed)");
-        door_status =0; 
-        distance = threshold + 20;
-      }
-      else{
-        //DEBUG_PRINTLN("Low Mount Switch reads HIGH, setting distance to low value (indicating open)");
-        door_status =1; 
-        distance = threshold - 20;
-      }
-    }else if (og.options[OPTION_MNT].ival == OG_SWITCH_HIGH){
-      vehicle_status= 3;
-      if (og.get_switch() == LOW){
-        //DEBUG_PRINTLN("High Mount Switch reads LOW, setting distance to low value (indicating open)");
-        door_status =1; 
-        distance = threshold - 20;
-      }
-      else{
-        //DEBUG_PRINTLN("High Mount Switch reads HIGH, setting distance to high value (indicating closed)");
-        door_status =0; 
-        distance = threshold + 20;
-      }
-    }
-    read_cnt = (read_cnt+1)%100;
+    
+    // Read SN1 -- ultrasonic sensor
+    uint dth = og.options[OPTION_DTH].ival;
+    uint vth = og.options[OPTION_VTH].ival;
+		bool sn1_status;
+		distance = og.read_distance();
+		if((distance==0 || distance>500 || !fullbuffer) && og.options[OPTION_SNO].ival!=OG_SNO_2ONLY) {
+			// invalid distance value or non full buffer, return immediately except if using SN2 only
+			DEBUG_PRINTLN(F("invalid distance or non-full buffer"));
+			checkstatus_timeout = curr_utc_time + og.options[OPTION_RIV].ival;
+			return; 
+		}
+		
+		sn1_status = (distance>dth)?0:1;
+		if(og.options[OPTION_SN1].ival == OG_SN1_SIDE) {
+			sn1_status = 1-sn1_status; // reverse logic for side mount
+			// for side-mount, we can't decide vehicle status
+			vehicle_status = OG_VEH_NOTAVAIL;
+		} else {
+      if (vth>0) {
+        if(!sn1_status) {
+        	// if vehicle distance threshold is defined and door is closed (i.e. not blocking view of vehicle)
+        	// vehicle status can be determined by checking if distance is within bracket [dth, vth]
+          vehicle_status = ((distance>dth) && (distance <=vth)) ? OG_VEH_PRESENT:OG_VEH_ABSENT;
+        } else { vehicle_status = OG_VEH_UNKNOWN; }	// door is open, blocking view of vehicle
+      } else {vehicle_status = OG_VEH_NOTAVAIL;} // vth undefined
+		}
+		
+		// Read SN2 -- optional switch sensor
+		sn2_value = og.get_switch();
+		byte sn2_status = 0;
+		if(og.options[OPTION_SN2].ival == OG_SN2_NC) {	// if SN2 is normally closed type
+			sn2_status = sn2_value;
+		} else if(og.options[OPTION_SN2].ival == OG_SN2_NO) {	// if SN2 is normally open type
+			sn2_status = 1-sn2_value;
+		}
+
+		// Process Sensor Logic
+		if(og.options[OPTION_SN2].ival==OG_SN2_NONE || og.options[OPTION_SNO].ival==OG_SNO_1ONLY) {
+			// if SN2 not installed or logic is SN1 only
+			door_status = sn1_status;
+		} else if(og.options[OPTION_SNO].ival==OG_SNO_2ONLY) {
+			door_status = sn2_status;
+		} else if(og.options[OPTION_SNO].ival==OG_SNO_AND) {
+			door_status = sn1_status && sn2_status;
+		} else if(og.options[OPTION_SNO].ival==OG_SNO_OR) {
+			door_status = sn1_status || sn2_status;
+		}
+    
     // get temperature readings
     og.read_TH_sensor(tempC, humid);
+    read_cnt = (read_cnt+1)%100;    
+    
     if (checkstatus_timeout == 0){
       DEBUG_PRINTLN(F("First time checking status don't trigger a status change, set full history to current value"));
       if (door_status) { door_status_hist = B11111111; }
@@ -1155,6 +1195,8 @@ void check_status() {
       l.tstamp = curr_utc_time;
       l.status = door_status;
       l.dist = distance;
+      l.sn2 = 255;	// use 255 to indicate invalid value
+      if(og.options[OPTION_SN2].ival>OG_SN2_NONE) l.sn2 = sn2_value;
       og.write_log(l);
 
 #if 0
@@ -1201,10 +1243,10 @@ void check_status() {
       }
 
       //Mqtt notification
-      if(og.options[OPTION_MQTT].sval.length()>8) {
+      if(valid_url(og.options[OPTION_MQTT].sval)) {
         if (mqttclient.connected()) {
           DEBUG_PRINTLN(F(" Update MQTT (State Change)"));
-          mqttclient.publish(og.options[OPTION_NAME].sval + "/OUT/CHANGE",String(event,DEC)); 
+          mqttclient.publish((mqtt_topic + "/OUT/CHANGE").c_str(),String(event,DEC)); 
         }
       }
 #endif
@@ -1223,18 +1265,21 @@ void check_status() {
       //IFTTT only recieves state change events not ongoing status
 
       //Mqtt update
-      if((og.options[OPTION_MQTT].sval.length()>8) && (mqttclient.connected())) {
+      if(valid_url(og.options[OPTION_MQTT].sval) && (mqttclient.connected())) {
         DEBUG_PRINTLN(F(" Update MQTT (State Refresh)"));
         if(door_status == DOOR_STATUS_REMAIN_OPEN)  {						// MQTT: If door open...
-          mqttclient.publish(og.options[OPTION_NAME].sval + "/OUT/STATE","OPEN");
-          mqttclient.publish(og.options[OPTION_NAME].sval,"Open"); //Support existing mqtt code
+          mqttclient.publish((mqtt_topic + "/OUT/STATE").c_str(),"OPEN");
+          mqttclient.publish(mqtt_topic.c_str(),"Open"); //Support existing mqtt code
           //DEBUG_PRINTLN(curr_utc_time + " Sending MQTT State otification: OPEN");
         } 
         else if(door_status == DOOR_STATUS_REMAIN_CLOSED) {					// MQTT: If door closed...
-          mqttclient.publish(og.options[OPTION_NAME].sval + "/OUT/STATE","CLOSED");
-          mqttclient.publish(og.options[OPTION_NAME].sval,"Closed"); //Support existing mqtt code
+          mqttclient.publish((mqtt_topic + "/OUT/STATE").c_str(),"CLOSED");
+          mqttclient.publish(mqtt_topic.c_str(),"Closed"); //Support existing mqtt code
           //DEBUG_PRINTLN(curr_utc_time + " Sending MQTT State Notification: CLOSED");
         }
+        String msg;
+        sta_controller_fill_json(msg, false);
+        mqttclient.publish((mqtt_topic + "/OUT/JSON").c_str(),msg.c_str());
       }
       // Send status report every 15 seconds: we don't need to send updates frequently if there is no status change.
       checkstatus_report_timeout= curr_utc_time + 15; 
@@ -1248,10 +1293,17 @@ void check_status() {
       static uint old_distance = 0;
       static byte old_door_status = 0xff, old_vehicle_status = 0xff;
       static String old_ip = "";
+      static float old_tempC = -100;
+      static float old_humid = -100;
+      
+      // to reduce traffic, only send updated values
       if(distance != old_distance) {  Blynk.virtualWrite(BLYNK_PIN_DIST, distance); old_distance = distance; }
       if(door_status != old_door_status) { (door_status) ? blynk_door.on() : blynk_door.off(); old_door_status = door_status; }
       if(vehicle_status != old_vehicle_status) { (vehicle_status==1) ? blynk_car.on() : blynk_car.off(); old_vehicle_status = vehicle_status; }
       if(old_ip != get_ip()) { Blynk.virtualWrite(BLYNK_PIN_IP, get_ip()); old_ip = get_ip(); }
+      // hack to simulate temp humid changes
+      if(old_tempC != tempC) { Blynk.virtualWrite(BLYNK_PIN_TEMP, tempC); old_tempC = tempC; }
+      if(old_humid != humid) { Blynk.virtualWrite(BLYNK_PIN_HUMID,humid); old_humid = humid; }
 
       // report json strings to Blynk
       /* comment this section out as the features are not fully ready yet
@@ -1286,16 +1338,29 @@ void time_keeping() {
   static ulong time_keeping_timeout = 0;
 
   if(!configured) {
-    DEBUG_PRINTLN(F("Set time server"));
-    configTime(0, 0, "time.google.com", "pool.ntp.org", NULL);
+  	if(valid_url(og.options[OPTION_NTP1].sval)) {
+	    DEBUG_PRINT(F("NTP1:"));
+ 	    DEBUG_PRINTLN(og.options[OPTION_NTP1].sval);
+	    configTime(0, 0, og.options[OPTION_NTP1].sval.c_str(), "0.pool.ntp.org", "time.google.com");
+	  } else {
+	  	configTime(0, 0, "0.pool.ntp.org", "time.google.com", "1.pool.ntp.org");
+	  }
+	  delay(2000);
     configured = true;
   }
 
   if(!curr_utc_time || (curr_utc_time > time_keeping_timeout)) {
-    ulong gt = time(nullptr);
+  	byte tick = 0;
+  	ulong gt = 0;
+  	do {
+  		gt = time(nullptr);
+  		tick++;
+  		delay(2000);
+  	} while(gt<978307200L && tick<10);
     if(gt<978307200L) {
       // if we didn't get response, re-try after 2 seconds
-      time_keeping_timeout = curr_utc_time + 2;
+      DEBUG_PRINTLN(F("ntp invalid! re-try in 60 seconds"));
+      time_keeping_timeout = curr_utc_time + 60;
     } else {
       curr_utc_time = gt;
       curr_utc_hour = (curr_utc_time % 86400)/3600;
@@ -1308,6 +1373,7 @@ void time_keeping() {
       prev_millis = millis();
     }
   }
+  
   while(millis() - prev_millis >= 1000) {
     curr_utc_time ++;
     curr_utc_hour = (curr_utc_time % 86400)/3600;
@@ -1406,9 +1472,11 @@ void do_loop() {
 
       // use ap ssid as mdns name
       if(MDNS.begin(get_ap_ssid().c_str(), WiFi.localIP())) {
-        DEBUG_PRINTLN(F("MDNS registered"));
-        DEBUG_PRINTLN(get_ap_ssid().c_str());
-        //MDNS.addService("http", "tcp", og.options[OPTION_HTP].ival);
+        DEBUG_PRINT(F("MDNS registered: "));
+        DEBUG_PRINT(get_ap_ssid().c_str());
+        DEBUG_PRINTLN(F(".local"));
+        
+        MDNS.addService("http", "tcp", og.options[OPTION_HTP].ival);
 				//DEBUG_PRINTLN(og.options[OPTION_HTP].ival);
       }
 
@@ -1416,10 +1484,6 @@ void do_loop() {
         Blynk.config(og.options[OPTION_AUTH].sval.c_str(), og.options[OPTION_BDMN].sval.c_str(), (uint16_t) og.options[OPTION_BPRT].ival); // use the config function
         Blynk.connect();
         DEBUG_PRINTLN(F("Blynk Connected"));
-      }
-      if(og.options[OPTION_MQTT].sval.length()>8) {
-        mqtt_connect_subscibe();
-        DEBUG_PRINTLN(F("MQTT Connected"));
       }
       led_blink_ms = 0;
       og.set_led(LOW);
@@ -1466,7 +1530,7 @@ void do_loop() {
       
     } else {
       if(WiFi.status() == WL_CONNECTED) {
-      	//MDNS.update();
+      	MDNS.update();
         time_keeping();
         check_status(); //This checks the door, sends info to services and processes the automation rules
         server->handleClient();
@@ -1474,9 +1538,15 @@ void do_loop() {
         if(curr_cloud_access_en)
           Blynk.run();
         //Handle MQTT
-        if(og.options[OPTION_MQTT].sval.length()>8) {
+        
+        if(valid_url(og.options[OPTION_MQTT].sval)) {
           if (!mqttclient.connected()) {
-            mqtt_connect_subscibe();
+		      	mqtt_id = get_ap_ssid();
+		      	mqtt_topic = og.options[OPTION_MQTP].sval;
+		      	if(mqtt_topic.length()==0) mqtt_topic = og.options[OPTION_NAME].sval;
+						mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), 1883);
+						mqttclient.setCallback(mqtt_callback); 		
+            mqtt_connect_subscribe();
           }
           else {mqttclient.loop();} //Processes MQTT Pings/keep alives
         }

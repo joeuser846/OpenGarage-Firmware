@@ -14,20 +14,16 @@ $(ESP_LIBS)/Ticker \
 ~/Arduino/libraries/DallasTemperature \
 .
 
-ESP_ROOT = $(HOME)/esp8266_2.4/
+ESP_ROOT = $(HOME)/esp8266_2.7.4/
 BUILD_ROOT = /tmp/$(MAIN_NAME)
 
-#UPLOAD_SPEED = 921600
-UPLOAD_SPEED = 230400
+UPLOAD_SPEED = 460800
 UPLOAD_VERB = -v
 UPLOAD_RESET = nodemcu
-# Uncomment the line below for revision 1: reset mode is ck
-# UPLOAD_RESET = ck
 
-#FLASH_DEF = 4M1M
-FLASH_DEF = 2M
+FLASH_DEF = 2M1M
 FLASH_MODE = dio
-FLASH_SPEED = 40  
+FLASH_SPEED = 40 
 F_CPU = 80000000L
 
 BOARD = generic

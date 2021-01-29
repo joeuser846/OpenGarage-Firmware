@@ -24,7 +24,7 @@
 #define _DEFINES_H
 
 /** Firmware version, hardware version, and maximal values */
-#define OG_FWV    111   // Firmware version: 111 means 1.1.1
+#define OG_FWV    112   // Firmware version: 111 means 1.1.1
 
 /** GPIO pins */
 #define PIN_RELAY  15 //D8 on nodemcu
@@ -41,15 +41,32 @@
 #define DEFAULT_NAME    "My OpenGarage"
 // Default device key
 #define DEFAULT_DKEY    "opendoor"
+// File System
+#define FILESYS					SPIFFS
 // Config file name
 #define CONFIG_FNAME    "/config.dat"
 // Log file name
-#define LOG_FNAME       "/log.dat"
+#define LOG_FNAME       "/log2.dat"
 
-#define OG_MNT_CEILING  0x00
-#define OG_MNT_SIDE     0x01
-#define OG_SWITCH_LOW   0x02
-#define OG_SWITCH_HIGH  0x03
+#define OG_SN1_CEILING  0x00	// SN1 is built-in ultrasonic sensor
+#define OG_SN1_SIDE     0x01
+
+#define OG_SN2_NONE			0x00	// SN2 is optional switch sensor
+#define OG_SN2_NC				0x01	// NC: normally closed
+#define OG_SN2_NO				0x02	// NO: normally open
+
+#define OG_SNO_1ONLY		0x00	// use SN1 only
+#define OG_SNO_2ONLY		0x01	// use SN2 only
+#define OG_SNO_AND			0x02	// SN1 AND SN2
+#define OG_SNO_OR				0x03	// SN1 OR SN2
+
+#define OG_SFI_MEDIAN		 0x00	// sensor filter: median method
+#define OG_SFI_CONSENSUS 0x01	// concensus method
+
+#define OG_VEH_ABSENT		0x00
+#define OG_VEH_PRESENT	0x01
+#define OG_VEH_UNKNOWN	0x02
+#define OG_VEH_NOTAVAIL	0x03
 
 #define OG_ALM_NONE     0x00
 #define OG_ALM_5        0x01
@@ -88,11 +105,13 @@
 #define BLYNK_PIN_DIST  V3
 #define BLYNK_PIN_CAR   V4
 #define BLYNK_PIN_IP    V5
-#define BLYNK_PIN_JC    V6
-#define BLYNK_PIN_CC    V7
-#define BLYNK_PIN_JO    V8
-#define BLYNK_PIN_CO    V9
-#define BLYNK_PIN_JL    V10
+#define BLYNK_PIN_TEMP	V6
+#define BLYNK_PIN_HUMID V7
+/*#define BLYNK_PIN_JC    V10
+#define BLYNK_PIN_CC    V11
+#define BLYNK_PIN_JO    V12
+#define BLYNK_PIN_CO    V13
+#define BLYNK_PIN_JL    V14*/
 
 enum {
   DIRTY_BIT_JC = 0,
@@ -114,17 +133,21 @@ enum {
 
 typedef enum {
   OPTION_FWV = 0, // firmware version
-  OPTION_MNT,     // mount type
-  OPTION_DTH,     // distance threshold door
-  OPTION_VTH,     // distance threshold vehicle detection
-  OPTION_RIV,     // read interval
+  OPTION_SN1,     // distance sensor mounting method
+  OPTION_SN2,			// switch sensor type
+  OPTION_SNO,			// sensor logic
+  OPTION_DTH,     // distance threshold for door
+  OPTION_VTH,     // distance threshold for vehicle
+  OPTION_RIV,     // status check interval
   OPTION_ALM,     // alarm mode
   OPTION_AOO,			// no alarm on opening
   OPTION_LSZ,     // log size
   OPTION_TSN,     // temperature sensor type
   OPTION_HTP,     // http port
   OPTION_CDT,     // click delay time
-  OPTION_DRI,			// distance read interval
+  OPTION_DRI,			// distance sensor reading interval
+  OPTION_SFI,			// sensor filter method
+  OPTION_CMR,			// consensus method margin
   OPTION_STO,			// sensor timeout option
   OPTION_MOD,     // mode
   OPTION_ATI,     // automation interval (in minutes)
@@ -141,11 +164,15 @@ typedef enum {
   OPTION_DKEY,    // device key
   OPTION_NAME,    // device name
   OPTION_IFTT,    // IFTTT token
-  OPTION_MQTT,    // MQTT IP
+  OPTION_MQTT,    // MQTT server
+  OPTION_MQUR,		// MQTT user name (optional)
+  OPTION_MQPW,		// MQTT password (optional)
+  OPTION_MQTP,		// MQTT topic (optional)
   OPTION_DVIP,    // device IP
   OPTION_GWIP,    // gateway IP
   OPTION_SUBN,    // subnet
   OPTION_DNS1,		// dns1 IP
+  OPTION_NTP1,		// custom NTP server
   NUM_OPTIONS     // number of options
 } OG_OPTION_enum;
 

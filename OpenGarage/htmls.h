@@ -133,15 +133,16 @@ const char sta_home_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta nam
 <style> table, th, td {border: 0px solid black;padding: 6px; border-collapse: collapse; }</style>
 <div data-role='page' id='page_home'><div data-role='header'><h3 id='head_name'>OG</h3></div>
 <div data-role='content'><div data-role='fieldcontain'>
-<table><tr><td><b>Door&nbsp;State:<br></td><td><label id='lbl_status'>-</label></td>
+<table><tr><td><b>Door State:<br></td><td><label id='lbl_status'>-</label></td>
 <td rowspan='2'><img id='pic' src='' style='width:112px;height:64px;'></td>
-</tr><tr><td><b><label id='lbl_vstatus1'>Vehicle&nbsp;State:&nbsp</label></b></td>
+</tr><tr><td><b><label id='lbl_vstatus1'>Vehicle State:</label></b></td>
 <td><label id='lbl_vstatus'>-</label></td></tr>
 <tr><td><b>Distance:</b></td><td><label id='lbl_dist'>-</label></td><td></td></tr>
-<tr><td><b>Read&nbsp;Count:</b></td><td><label id='lbl_beat'>-</label></td><td></td></tr>
-<tr><td><b>WiFi&nbsp;Signal:</b></td><td colspan='2'><label id='lbl_rssi'>-</label></td></tr>
+<tr id='tbl_sn2' style='display:none;'><td><b>Switch State:</b></td><td><label id='lbl_sn2'>-</label></td><td></td></tr>
+<tr><td><b>Read Count:</b></td><td><label id='lbl_beat'>-</label></td><td></td></tr>
+<tr><td><b>WiFi Signal:</b></td><td colspan='2'><label id='lbl_rssi'>-</label></td></tr>
 <tr id='tbl_th' style='display:none;'><td><b>T/H sensor:</b></td><td colspan='2'><label id='lbl_th'>-</label></td></tr>
-<tr><td><b>Device&nbsp;Key:</b></td><td colspan='2' ><input type='password' size=20 maxlength=32 name='dkey' id='dkey'></td></tr>
+<tr><td><b>Device Key:</b></td><td colspan='2' ><input type='password' size=20 maxlength=32 name='dkey' id='dkey'></td></tr>
 <tr><td colspan=3><label id='msg'></label></td></tr>
 </table><br />
 <div data-role='controlgroup' data-type='horizontal'>
@@ -237,6 +238,8 @@ $('#pic').attr('src', (jd.door?'https://github.com/OpenGarage/OpenGarage-Firmwar
 }else{
 $('#pic').attr('src', jd.door?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/Open.png':(jd.vehicle?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/ClosedPresent.png':'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/ClosedAbsent.png'));
 }
+if(typeof(jd.sn2)!='undefined') {$('#tbl_sn2').show(); $('#lbl_sn2').text(jd.sn2?'High':'Low');}
+else {$('#tbl_sn2').hide();}
 $('#lbl_beat').text(jd.rcnt);
 $('#lbl_rssi').text((jd.rssi>-71?'Good':(jd.rssi>-81?'Weak':'Poor')) +' ('+ jd.rssi +' dBm)');
 $('#head_name').text(jd.name);
@@ -265,7 +268,7 @@ const char sta_logs_html[] PROGMEM = R"(<head>
 <button data-theme="b" id="btn_back">Back</button>
 </div>
 <div data-role='fieldcontain'>
-<table id='tab_log' border='1' cellpadding='4' style='border-collapse:collapse;'><tr><td align='center'><b>Event</b></td><td align='center'><b>DateTime</b></td><td align='center'><b>Details</b></td></tr></table>
+<table id='tab_log' border='1' cellpadding='4' style='border-collapse:collapse;'><tr><td align='center'><b>Event</b></td><td align='center'><b>DateTime</b></td><td align='center'><b>Dist.</b></td><td align='center' id='col_sn2' style='display:none;'><b>Switch</b></td></tr></table>
 </div>
 </div>
 </div>
@@ -293,9 +296,15 @@ $('#lbl_nr').text(logs.length);
 var ldate = new Date();
 for(var i=0;i<logs.length;i++) {
 ldate.setTime(logs[i][0]*1000);
-var r='<tr></td><td align="left"><img id="pic" src="data:image/png;base64,' + (logs[i][1]?'iVBORw0KGgoAAAANSUhEUgAAACAAAAAZCAYAAABQDyyRAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH4gEBFiwkDx0OQQAAArtJREFUSMfFlstLlFEYxn/nfN/5HHVmskTF1LQCcRMRRBAZClbQH1CLatUiqm2rWrUP2rRqUZuKVgUREUFR2M2yMhC6iGSafl3QaZxJ53K+75wWSReaMTUdn+XhXJ73Pe/7vI94/e6mrXj2nPhIkpCAkkAIJuvL0Vu24cbu3qdhxAMRpZSoTkHq40NkjS9AUHoIiKc8pBcqlg0C5IIOGgN5jY555FeUYXUeQrOgq9x57bagRZ78xvXYjnai1a1gLdnECJmnd4g/G8YJBQixSASCEC1y0NhI0NqMamlDtLSiyCD7X5F6cRkroKJ6LdGuPbA7RtZ/izMwRDA0gDfk4xgPlFMgmB8khT150hb+H0l61yYimztRbhSMJeX3Ibof4ExpdFc7sXVbkAi++f3I7kfocBq5dTuVzRuRjiLLFEFPN5W3esDMPGMtVhj82DgqdIsTsLEomcP7cB73ksslkfEqIjVrsc1NqEhV4YTpaRj9QDo9zGR/L/HBCfTBA5R37EQlUugwwMtC5De5KZ4Ba8Eavh3aQ7RhQ7GSKFbcACQIWCXUAmtACKzrorw4uWCS/g8XEDNXWwFl77Os6ZvCyL/P8fkLK48ep6Jh9SJ0gbUYE9DWuJeoqv213gKms3D02Zc9MDGBXQwCAoHMhHw6tp/J6XAunYoz6lN+7sb/tWGgIJ/4SKgzlMsyGq88QSXTc9eMQq1XAH8roZWkKwMmrp9DnT2Pm5z6sewszcD4IwOBJxkf6yNy5hp1CYPxFFos7aT6SSBTFpC8ep76Xr+k88hFOIznhpEXr1A/+LXkA9Edy72h9vRlVNawHHDrTl3C1bNImuOA687ftLjuHLfpWTTAGJx73YiqamR+nn7x9m2cprp/exJbXNIXzYBiiz8h7VL7QTt7fPJLU2TZLKF2QPonDhLK5SHw5sgOvgNSpAhhsRiYRQAAAABJRU5ErkJggg==':'iVBORw0KGgoAAAANSUhEUgAAACAAAAAZCAYAAABQDyyRAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gEBFisqp+S1gQAAAuRJREFUSMfFlt1LFFEYxn9nZpx1dScV11w1NzNFQ7QouiiiDwq6kQiCoAir+6B/pbrLKLqqm6CrIIiMro2+sw9qzVXXdN00V3fc2dlzuuiL0t2OW+h7NcM5PO/znvd5n3NE/0BXA3AR2MbqxhBw3gJuAPtZ/WgHNhlrlPxH9BiscZRIQODLRRQSAD/vAqIkJGslmz1/nopAmJbwIbY0HSdStR2A5NwrXiduMjx1j/nsJ2zL0S+lf6BLFV5WZP004VAn0fABupv7cMqbUEoSm7rLm8QtFJL2yBHa6nsxDRvXS/Esfo2R6Qck0y+xLQdR5HQKEhAIdrSeo6f5LKZhk/GSvP90h+HkPWyrkvb6I7RFegGIpx7yduI2Xu4LkeqddDQcJVTeiELyPH6dR7GL5HwfXyqkBKUUUn1rWsEWmIZNa91hBmOXmJgdpKZyM50Nx+iJnlmyN1q7j2jtPgAyXpKnI1cZm45hiSZ2dZzgbfwCrpdBiKVKKdICRcZLcXL3feqcrpJVfvqSTXVlI0KIlYpQYBkBApZDLp/hycfLOMHGn2sLrk82tzz3ucwke7b04QTDlFnlBZNrT0Eu71Jf1cPG8EGtqmOTg2SyszjB8P8YQwEYDI0+xhT1WgTGU0N0bNj7bz5gCJjL5Mn5ElOAbYaoqoxogYaCtaBk6QSkVMQmFkmlXdT3NkslUVIPVEqp7YzW71ULkl88EtMehuCXeATMLkyQmHmjBZqajxMNd6+MgFKKd2MuizmJ8Qd5pRQt67fT2aTX16C9DqnyegSEADcr+TDu/pTccjKMTQ5iGKYW6FjqFbs7TuoRmEn7xCcXMQ1R5EZQVASqWRdcrwVaYY8DSo/A2FS2aHIhBEoponVbaW/YpXfDCQOlOwVFTIoyM8DAyyuYwmJmIcHo9Ast0M/pUQJlDqHyGmyrojjZ81db/nJWapmvv1tXob8SnVAHqsQnmRAMr+GTcNYA+oD8WmQXglNfAfQMC/0EmCdPAAAAAElFTkSuQmCC') +'" style="width:20px;height:15px;">'+(logs[i][1]?' Opened':' Closed')+'<td align="center">'+ldate.toLocaleString()+'</td><td align="center">'+logs[i][2]+' cm</td></tr>';
+var r='<tr></td><td align="left"><img id="pic" src="data:image/png;base64,' + (logs[i][1]?'iVBORw0KGgoAAAANSUhEUgAAACAAAAAZCAYAAABQDyyRAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH4gEBFiwkDx0OQQAAArtJREFUSMfFlstLlFEYxn/nfN/5HHVmskTF1LQCcRMRRBAZClbQH1CLatUiqm2rWrUP2rRqUZuKVgUREUFR2M2yMhC6iGSafl3QaZxJ53K+75wWSReaMTUdn+XhXJ73Pe/7vI94/e6mrXj2nPhIkpCAkkAIJuvL0Vu24cbu3qdhxAMRpZSoTkHq40NkjS9AUHoIiKc8pBcqlg0C5IIOGgN5jY555FeUYXUeQrOgq9x57bagRZ78xvXYjnai1a1gLdnECJmnd4g/G8YJBQixSASCEC1y0NhI0NqMamlDtLSiyCD7X5F6cRkroKJ6LdGuPbA7RtZ/izMwRDA0gDfk4xgPlFMgmB8khT150hb+H0l61yYimztRbhSMJeX3Ibof4ExpdFc7sXVbkAi++f3I7kfocBq5dTuVzRuRjiLLFEFPN5W3esDMPGMtVhj82DgqdIsTsLEomcP7cB73ksslkfEqIjVrsc1NqEhV4YTpaRj9QDo9zGR/L/HBCfTBA5R37EQlUugwwMtC5De5KZ4Ba8Eavh3aQ7RhQ7GSKFbcACQIWCXUAmtACKzrorw4uWCS/g8XEDNXWwFl77Os6ZvCyL/P8fkLK48ep6Jh9SJ0gbUYE9DWuJeoqv213gKms3D02Zc9MDGBXQwCAoHMhHw6tp/J6XAunYoz6lN+7sb/tWGgIJ/4SKgzlMsyGq88QSXTc9eMQq1XAH8roZWkKwMmrp9DnT2Pm5z6sewszcD4IwOBJxkf6yNy5hp1CYPxFFos7aT6SSBTFpC8ep76Xr+k88hFOIznhpEXr1A/+LXkA9Edy72h9vRlVNawHHDrTl3C1bNImuOA687ftLjuHLfpWTTAGJx73YiqamR+nn7x9m2cprp/exJbXNIXzYBiiz8h7VL7QTt7fPJLU2TZLKF2QPonDhLK5SHw5sgOvgNSpAhhsRiYRQAAAABJRU5ErkJggg==':'iVBORw0KGgoAAAANSUhEUgAAACAAAAAZCAYAAABQDyyRAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gEBFisqp+S1gQAAAuRJREFUSMfFlt1LFFEYxn9nZpx1dScV11w1NzNFQ7QouiiiDwq6kQiCoAir+6B/pbrLKLqqm6CrIIiMro2+sw9qzVXXdN00V3fc2dlzuuiL0t2OW+h7NcM5PO/znvd5n3NE/0BXA3AR2MbqxhBw3gJuAPtZ/WgHNhlrlPxH9BiscZRIQODLRRQSAD/vAqIkJGslmz1/nopAmJbwIbY0HSdStR2A5NwrXiduMjx1j/nsJ2zL0S+lf6BLFV5WZP004VAn0fABupv7cMqbUEoSm7rLm8QtFJL2yBHa6nsxDRvXS/Esfo2R6Qck0y+xLQdR5HQKEhAIdrSeo6f5LKZhk/GSvP90h+HkPWyrkvb6I7RFegGIpx7yduI2Xu4LkeqddDQcJVTeiELyPH6dR7GL5HwfXyqkBKUUUn1rWsEWmIZNa91hBmOXmJgdpKZyM50Nx+iJnlmyN1q7j2jtPgAyXpKnI1cZm45hiSZ2dZzgbfwCrpdBiKVKKdICRcZLcXL3feqcrpJVfvqSTXVlI0KIlYpQYBkBApZDLp/hycfLOMHGn2sLrk82tzz3ucwke7b04QTDlFnlBZNrT0Eu71Jf1cPG8EGtqmOTg2SyszjB8P8YQwEYDI0+xhT1WgTGU0N0bNj7bz5gCJjL5Mn5ElOAbYaoqoxogYaCtaBk6QSkVMQmFkmlXdT3NkslUVIPVEqp7YzW71ULkl88EtMehuCXeATMLkyQmHmjBZqajxMNd6+MgFKKd2MuizmJ8Qd5pRQt67fT2aTX16C9DqnyegSEADcr+TDu/pTccjKMTQ5iGKYW6FjqFbs7TuoRmEn7xCcXMQ1R5EZQVASqWRdcrwVaYY8DSo/A2FS2aHIhBEoponVbaW/YpXfDCQOlOwVFTIoyM8DAyyuYwmJmIcHo9Ast0M/pUQJlDqHyGmyrojjZ81db/nJWapmvv1tXob8SnVAHqsQnmRAMr+GTcNYA+oD8WmQXglNfAfQMC/0EmCdPAAAAAElFTkSuQmCC') +'" style="width:20px;height:15px;">'+(logs[i][1]?' Opened':' Closed')+'<td align="center">'+ldate.toLocaleString()+'</td><td align="center">'+logs[i][2]+' cm</td>';
+if(typeof(jd.ncols)!='undefined'&&jd.ncols>3) {
+r+='<td align="center">'+(logs[i][3]==255?'-':(logs[i][3]?'High':'Low'))+'</td></tr>';
+}
+r+='</tr>';
 $('#tab_log').append(r);
 }
+if(typeof(jd.ncols)!='undefined'&&jd.ncols>3) { $('#col_sn2').show(); }
+else { $('#col_sn2').hide(); }
 });
 setTimeout(show_log, 10000);
 }
@@ -316,38 +325,27 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 <div id='div_basic'>
 <table cellpadding=2>
 <tr><td><b>Device Name:</b></td><td><input type='text' size=10 maxlength=32 id='name' data-mini='true' value='-'></td></tr>
-<tr><td><b>Door Sensor:</b></td><td>
-<select name='mnt' id='mnt' data-mini='true' onChange='disable_dth()'>
+<tr><td><b>Distance Sensor:</b><br><small>mounting method</small></td><td>
+<select name='sn1' id='sn1' data-mini='true'>
 <option value=0>Ceiling Mount</option>
 <option value=1>Side Mount</option>
-<option value=2>Norm. Closed Switch on G04</option>
-<option value=3>Norm. Open Switch on G04</option>
 </select></td></tr>
 <tr><td><b>Door Thres. (cm): </b></td><td><input type='text' size=3 maxlength=4 id='dth' data-mini='true' value=0></td></tr>
-<tr><td><b>Car Thres. (cm):</b><br><small>(Set 0 to disable) </small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
-<tr><td><b>Read Interval (s):</b></td><td><input type='text' size=3 maxlength=3 id='riv' data-mini='true' value=0></td></tr>
+<tr><td><b>Car Thres. (cm):</b><br><small>set 0 to disable</small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
+<tr><td><b>Status Check (s):</b><br><small>check status every</small></td><td><input type='text' size=3 maxlength=3 id='riv' data-mini='true' value=0></td></tr>
 <tr><td><b>Click Time (ms):</b></td><td><input type='text' size=3 maxlength=5 id='cdt' value=0 data-mini='true'></td></tr>
-<tr><td><b>Dist. Read (ms):</b></td><td><input type='text' size=3 maxlength=5 id='dri' value=0 data-mini='true'></td></tr>
-<tr><td><b>Sensor Timeout:</b></td><td>
-<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
-<input type='radio' name='rd_to' id='to_ignore' value=0><label for='to_ignore'>Ignore</label>
-<input type='radio' name='rd_to' id='to_cap' value=1><label for='to_cap'>Cap</label>
-</fieldset>
-</td></tr>
-<tr><td><b>Sound Alarm:</b></td><td>
-<select name='alm' id='alm' data-mini='true'>
-<option value=0>Disabled</option>
-<option value=1>5 seconds</option>
-<option value=2>10 seconds</option>
+<tr><td><b>Switch Sensor:</b><br><small>on G04 and GND</small></td><td>
+<select name='sn2' id='sn2' data-mini='true' onChange='update_sno()'>
+<option value=0>(none)</option>
+<option value=1>Normally Closed</option>
+<option value=2>Normally Open</option>
 </select></td></tr>
-<tr><td colspan=2><input type='checkbox' id='aoo' data-mini='true'><label for='aoo'>Do not alarm when opening</label></td></tr>
-<tr><td><b>Log Size:<a href='#lszInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Important note</a><div data-role='popup' id='lszInfo' class='ui-content' data-theme='b' style='max-width:320px;'><p>If you change log size, please Clear Log for the new size to take effect.</p></div></b></td><td>
-<select name='lsz' id='lsz' data-mini='true'>
-<option value=20>20</option>
-<option value=50>50</option>
-<option value=100>100</option>
-<option value=200>200</option>
-<option value=400>400</option>
+<tr><td><b>Sensor Logic:</b><a href='#snoInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Explanation</a><div data-role='popup' id='snoInfo' class='ui-content' data-theme='b' style='max-width:250px;'><p>Choose which sensor(s) determine door 'open' status.</p></div></td><td>
+<select name='sno' id='sno' data-mini='true' disabled='true'>
+<option value=0>Dist. sensor only</option>
+<option value=1>Switch sensor only</option>
+<option value=2>Dist. AND Switch</option>
+<option value=3>Dist. OR Switch</option>
 </select></td></tr>
 <tr><td><b>T/H Sensor:</b></td><td>
 <select name='tsn' id='tsn' data-mini='true'>
@@ -357,15 +355,33 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 <option value=3>DHT22 on G05</option>
 <option value=4>DS18B20 on G05</option>
 </select></td></tr>
+<tr><td><b>Sound Alarm:</b></td><td>
+<select name='alm' id='alm' data-mini='true'>
+<option value=0>Disabled</option>
+<option value=1>5 seconds</option>
+<option value=2>10 seconds</option>
+</select></td></tr>
+<tr><td colspan=2><input type='checkbox' id='aoo' data-mini='true'><label for='aoo'>Do not alarm when opening</label></td></tr>
+<tr><td><b>Log Size:</b><a href='#lszInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Important note</a><div data-role='popup' id='lszInfo' class='ui-content' data-theme='b' style='max-width:280px;'><p>If you change log size, please Clear Log for the new size to take effect.</p></div></td><td>
+<select name='lsz' id='lsz' data-mini='true'>
+<option value=20>20</option>
+<option value=50>50</option>
+<option value=100>100</option>
+<option value=200>200</option>
+<option value=400>400</option>
+</select></td></tr>
 </table>
 </div>
 <div id='div_cloud' style='display:none;'>
 <table cellpadding=1>
-<tr><td><b>Blynk Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true' value='-'></td></tr>
-<tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value='-'></td></tr>
+<tr><td><b>Blynk Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true' value='' placeholder='(optional)'></td></tr>
+<tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value=''></td></tr>
 <tr><td><b>Blynk Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true' value=0></td></tr>
-<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='-'></td></tr>
-<tr><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=20 id='mqtt' data-mini='true' value=''></td></tr>
+<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='' placeholder='(optional)'></td></tr>
+<tr><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true' value='' placeholder='(optional)' onInput='update_mqtt()'></td></tr>
+<tr><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=32 id='mqur' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
+<tr><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=32 id='mqpw' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
+<tr><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' value='' placeholder='(optional)'></td></tr>
 </table>
 <table>
 <tr><td colspan=4><b>Choose Notifications:</b></td></tr>
@@ -381,7 +397,22 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </div>
 <div id='div_other' style='display:none;'>
 <table cellpadding=2>
+<tr><td><b>Read Intv. (ms):</b><br><small>read sensor every</small></td><td><input type='text' size=3 maxlength=5 id='dri' value=0 data-mini='true'></td></tr>
+<tr><td><b>Sensor Filter:</b><br><small>noise filter method</small></td><td>
+<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
+<input type='radio' name='rd_sf' id='sf_med' value=0 onclick='update_sfi()'><label for='sf_med'>Median</label>
+<input type='radio' name='rd_sf' id='sf_con' value=1 onclick='update_sfi()'><label for='sf_con'>Consensus</label>
+</fieldset>
+</td></tr>
+<tr id='tbl_cmr' style='display:none;'><td><b>Margin (cm):</b></td><td><input type='text' size=5 maxlength=5 id='cmr' value=10 data-mini='true'></td></tr>
+<tr><td><b>Dist. Timeout:</b><br><small>timeout handling</small></td><td>
+<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
+<input type='radio' name='rd_to' id='to_ignore' value=0><label for='to_ignore'>Ignore</label>
+<input type='radio' name='rd_to' id='to_cap' value=1><label for='to_cap'>Cap</label>
+</fieldset>
+</td></tr>
 <tr><td><b>HTTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='htp' value=0 data-mini='true'></td></tr>
+<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=32 id='ntp1' value='' data-mini='true' placeholder='(optional)'></td></tr>
 <tr><td colspan=2><input type='checkbox' id='usi' data-mini='true'><label for='usi'>Use Static IP</label></td></tr>
 <tr><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true' disabled></td></tr>
 <tr><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true' disabled></td></tr>
@@ -410,11 +441,21 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </div>
 <script>
 function clear_msg() {$('#msg').text('');}
-function disable_dth(){
-if (parseInt($('#mnt option:selected').val()) >1){
-$('#dth').textinput('disable'); 
-$('#vth').textinput('disable'); 
-}else{$('#dth').textinput('enable');}
+function update_sno(){
+if(parseInt($('#sn2 option:selected').val())>0){
+$('#sno').selectmenu('enable'); 
+}else{$('#sno').selectmenu('disable');}
+}
+function update_mqtt(){
+if($('#mqtt').val().length>0){
+$('#mqur').textinput('enable');$('#mqpw').textinput('enable');$('#mqtp').textinput('enable');
+}else{
+$('#mqur').textinput('disable');$('#mqpw').textinput('disable');$('#mqtp').textinput('disable');
+}
+}
+function update_sfi(){
+if(eval_cb('#sf_con')) $('#tbl_cmr').show();
+else $('#tbl_cmr').hide();
 }
 function show_msg(s) {$('#msg').text(s).css('color','red'); setTimeout(clear_msg, 2000);}
 function goback() {history.back();}
@@ -440,24 +481,21 @@ if(eval_cb('#other')) $('#div_other').show();
 $('#btn_back').click(function(e){
 e.preventDefault(); goback();
 });
+var comm;
+function bc(n,e=0) {comm+='&'+n+'=';
+if(e) comm+=encodeURIComponent($('#'+n).val());
+else comm+=$('#'+n).val();
+}
 $('#btn_submit').click(function(e){
 e.preventDefault();
 if(confirm('Submit changes?')) {
-var comm='co?dkey='+encodeURIComponent($('#dkey').val());
-comm+='&mnt='+$('#mnt').val();
-comm+='&dth='+$('#dth').val();
-comm+='&vth='+$('#vth').val();
-comm+='&riv='+$('#riv').val();
-comm+='&alm='+$('#alm').val();
+comm='co?dkey='+encodeURIComponent($('#dkey').val());
+bc('sn1');bc('sn2');bc('sno');bc('dth');bc('vth');bc('riv');bc('alm');
+bc('lsz');bc('tsn');bc('htp');bc('cdt');bc('dri');bc('ati');bc('atib');
 comm+='&aoo='+($('#aoo').is(':checked')?1:0);
-comm+='&lsz='+$('#lsz').val();
-comm+='&tsn='+$('#tsn').val();
-comm+='&htp='+$('#htp').val();
-comm+='&cdt='+$('#cdt').val();
-comm+='&dri='+$('#dri').val();
 comm+='&sto='+eval_cb('#to_cap');
-comm+='&ati='+$('#ati').val();
-comm+='&atib='+$('#atib').val();
+comm+='&sfi='+eval_cb('#sf_con');
+if(eval_cb('#sf_con')) bc('cmr');
 var ato=0;
 for(var i=1;i>=0;i--) { ato=(ato<<1)+eval_cb('#ato'+i); }
 comm+='&ato='+ato;
@@ -467,21 +505,18 @@ comm+='&atob='+atob;
 var noto=0;
 for(var i=1;i>=0;i--) { noto=(noto<<1)+eval_cb('#noto'+i); }
 comm+='&noto='+noto;
-comm+='&name='+encodeURIComponent($('#name').val());
-comm+='&auth='+encodeURIComponent($('#auth').val());
-comm+='&bdmn='+encodeURIComponent($('#bdmn').val());
-comm+='&bprt='+$('#bprt').val();
-comm+='&iftt='+encodeURIComponent($('#iftt').val());
-comm+='&mqtt='+encodeURIComponent($('#mqtt').val());
+bc('name',1);bc('auth',1);bc('bdmn',1);bc('iftt',1);
+bc('mqtt',1);bc('mqur',1);bc('mqpw',1);bc('mqtp',1);
+bc('bprt');bc('ntp1');
 if($('#cb_key').is(':checked')) {
 if(!$('#nkey').val()) {
 if(!confirm('New device key is empty. Are you sure?')) return;
 }
-comm+='&nkey='+encodeURIComponent($('#nkey').val());
-comm+='&ckey='+encodeURIComponent($('#ckey').val());
+bc('nkey',1);bc('ckey',1);
 }
 if($('#usi').is(':checked')) {
-comm+='&usi=1&dvip='+($('#dvip').val())+'&gwip='+($('#gwip').val())+'&subn='+($('#subn').val())+'&dns1='+($('#dns1').val());
+comm+='&usi=1';
+bc('dvip');bc('gwip')+bc('subn');bc('dns1');
 } else {
 comm+='&usi=0';
 }
@@ -503,9 +538,10 @@ $('#alm').val(jd.alm).selectmenu('refresh');
 if(jd.aoo>0) $('#aoo').attr('checked',true).checkboxradio('refresh');
 $('#lsz').val(jd.lsz).selectmenu('refresh');
 $('#tsn').val(jd.tsn).selectmenu('refresh');
-$('#mnt').val(jd.mnt).selectmenu('refresh');
-if(jd.mnt>1) $('#dth').textinput('disable'); 
-if(jd.mnt>0) $('#vth').textinput('disable'); 
+$('#sn1').val(jd.sn1).selectmenu('refresh');
+$('#sn2').val(jd.sn2).selectmenu('refresh');
+$('#sno').val(jd.sno).selectmenu('refresh');
+update_sno();
 $('#dth').val(jd.dth);
 $('#vth').val(jd.vth);
 $('#riv').val(jd.riv);
@@ -514,6 +550,10 @@ $('#cdt').val(jd.cdt);
 $('#dri').val(jd.dri);
 if(jd.sto) $('#to_cap').attr('checked',true).checkboxradio('refresh');
 else $('#to_ignore').attr('checked',true).checkboxradio('refresh');
+if(jd.sfi) $('#sf_con').attr('checked',true).checkboxradio('refresh');
+else $('#sf_med').attr('checked',true).checkboxradio('refresh');
+if(jd.cmr) $('#cmr').val(jd.cmr);
+update_sfi();
 $('#ati').val(jd.ati);
 $('#atib').val(jd.atib);
 for(var i=0;i<=1;i++) {if(jd.ato&(1<<i)) $('#ato'+i).attr('checked',true).checkboxradio('refresh');}
@@ -523,8 +563,12 @@ $('#name').val(jd.name);
 $('#auth').val(jd.auth);
 $('#bdmn').val(jd.bdmn);
 $('#bprt').val(jd.bprt);
-$('#iftt').val(jd.iftt);
+if(jd.iftt) $('#iftt').val(jd.iftt);
 $('#mqtt').val(jd.mqtt);
+if(jd.mqur) $('#mqur').val(jd.mqur);
+if(jd.mqpw) $('#mqpw').val(jd.mqpw);
+if(jd.mqtp) $('#mqtp').val(jd.mqtp);
+update_mqtt();
 $('#dvip').val(jd.dvip);
 $('#gwip').val(jd.gwip);
 $('#subn').val(jd.subn);
@@ -534,6 +578,7 @@ $('#dvip').textinput(jd.usi>0?'enable':'disable');
 $('#gwip').textinput(jd.usi>0?'enable':'disable');
 $('#subn').textinput(jd.usi>0?'enable':'disable');
 $('#dns1').textinput(jd.usi>0?'enable':'disable');  
+if(jd.ntp1) $('#ntp1').val(jd.ntp1);
 });
 });
 </script>

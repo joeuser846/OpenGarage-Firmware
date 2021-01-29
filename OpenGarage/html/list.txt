@@ -1,0 +1,6 @@
+ap_home.html
+ap_update.html
+sta_home.html
+sta_logs.html
+sta_options.html
+sta_update.html
