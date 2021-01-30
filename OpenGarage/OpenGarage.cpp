@@ -83,7 +83,7 @@ OptionStruct OpenGarage::options[] = {
   {"gwip", 0, 0, ""},
   {"subn", 0, 0, "255.255.255.0"},
   {"dns1", 0, 0, "8.8.8.8"},
-  {"ntp1", 0, 0, "pool.ntp.org"},
+  {"ntp1", 0, 0, ""},
 };
 
 /* Variables and functions for handling Ultrasonic Distance sensor */
