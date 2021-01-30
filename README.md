@@ -3,27 +3,27 @@ This folder contains firmware source code and documentation for OpenGarage. For 
 
 For Firmware release notes, go to [https://github.com/OpenGarage/OpenGarage-Firmware/releases](https://github.com/OpenGarage/OpenGarage-Firmware/releases)
 
-<img src="Screenshots/1_og_ap.png" height=200> <img src="Screenshots/2_og_home.png" height=200> <img src="Screenshots/3_og_log.png" height=200> <img src="Screenshots/4_og_options.png" height=200><img src="Screenshots/7_og_options_int.png" height=200> <img src="Screenshots/5_og_update.png" height=200> <img src="Screenshots/6_og_blynk_app.png" height=200>
+<img src="Screenshots/1_og_ap.jpg" height=200> <img src="Screenshots/2_og_home.jpg" height=200> <img src="Screenshots/3_og_log.jpg" height=200> <img src="Screenshots/4_og_options_basic.jpg" height=200><img src="Screenshots/5_og_options_integration.jpg" height=200> <img src="Screenshots/6_og_options_advanced.jpg" height=200> <img src="Screenshots/7_og_update.jpg" height=200> <img src="Screenshots/8_og_blynk_app.jpg" height=200>
 
 
 ### Firmware Compilation Instructions:
 
 #### Requirement:
 
-* Arduino (https://arduino.cc) with ESP8266 core 2.4.1 or above for Arduino (https://github.com/esp8266/Arduino/releases/tag/2.4.1)
+* Arduino (https://arduino.cc) with ESP8266 core 2.7.4 or above for Arduino (https://github.com/esp8266/Arduino/releases/tag/2.7.4)
 * Instead of installing Arduino, you can also directly use make (this folder includes a copy of **makeESPArduino**: https://github.com/plerup/makeEspArduino)
 * Blynk library for Arduino (https://github.com/blynkkk/blynk-library)
-* MQTT PubSUbClient https://github.com/Imroy/pubsubclient/releases
+* MQTT PubSUbClient https://github.com/knolleary/pubsubclient (version 2.8)
 * AM2320 library: https://github.com/hibikiledo/AM2320/releases
 * OneWire library: https://www.pjrc.com/teensy/td_libs_OneWire.html
 * DallasTemperature library: https://github.com/milesburton/Arduino-Temperature-Control-Library/releases
 * DHTesp library: https://github.com/beegee-tokyo/DHTesp/releases
 
-* This (OpenGarage) library
+* This (OpenGarage) source code
 
 #### Setting up a Dev Environment
 
-* Install Arduino with ESP8266 core 2.4.1 (or use make directly, following https://github.com/plerup/makeEspArduino).
+* Install Arduino with ESP8266 core 2.7.4 (or use make directly, following https://github.com/plerup/makeEspArduino).
 * Install Arduino libraries referenced above.
 * Download this repository and extract the OpenGarage library to your Arduino's `libraries` folder.
 
