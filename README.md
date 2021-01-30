@@ -3,7 +3,7 @@ This folder contains firmware source code and documentation for OpenGarage. For 
 
 For Firmware release notes, go to [https://github.com/OpenGarage/OpenGarage-Firmware/releases](https://github.com/OpenGarage/OpenGarage-Firmware/releases)
 
-<img src="Screenshots/1_og_ap.jpg" height=200> <img src="Screenshots/2_og_home.jpg" height=200> <img src="Screenshots/3_og_log.jpg" height=200> <img src="Screenshots/4_og_options_basic.jpg" height=200><img src="Screenshots/5_og_options_integration.jpg" height=200> <img src="Screenshots/6_og_options_advanced.jpg" height=200> <img src="Screenshots/7_og_update.jpg" height=200> <img src="Screenshots/8_og_blynk_app.jpg" height=200>
+<img src="Screenshots/1_og_ap.jpg" height=350> <img src="Screenshots/2_og_home.jpg" height=350> <img src="Screenshots/3_og_log.jpg" height=350> <img src="Screenshots/4_og_options_basic.jpg" height=350><img src="Screenshots/5_og_options_integration.jpg" height=350> <img src="Screenshots/6_og_options_advanced.jpg" height=350> <img src="Screenshots/7_og_update.jpg" height=350> <img src="Screenshots/8_og_blynk_app.jpg" height=350>
 
 
 ### Firmware Compilation Instructions:
