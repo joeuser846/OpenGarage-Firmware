@@ -748,15 +748,16 @@ void on_ap_debug() {
 }
 
 // MQTT callback to read "Button" requests
-void mqtt_callback(char* topic, byte* payload, unsigned int length) { 
-  //DEBUG_PRINT("MQTT Message Received: ");
-  //DEBUG_PRINT(pub.topic());
-  //DEBUG_PRINT(" Data: ");
-  //DEBUG_PRINTLN(pub.payload_string());
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+	payload[length]=0;
+	String Payload((char*)payload);
+	String Topic(topic);
+  DEBUG_PRINT("MQTT Message Received: ");
+  DEBUG_PRINT(Topic);
+  DEBUG_PRINT(" Data: ");
+  DEBUG_PRINTLN(Payload);
 
   //Accept button on any topic for backwards compat with existing code - use IN messages below if possible
-  String Payload = (char*)payload;
-  String Topic = (char*)topic;
   if (Payload=="Button") {
     DEBUG_PRINTLN(F("MQTT Button request received, change door state"));
     if(!og.options[OPTION_ALM].ival) {
@@ -791,7 +792,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
     }
     else {
       DEBUG_PRINT(F("Unrecognized MQTT data/command:"));
-      DEBUG_PRINTLN(Payload);
     }
   }
 }
