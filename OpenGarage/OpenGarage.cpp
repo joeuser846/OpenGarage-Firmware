@@ -76,6 +76,7 @@ OptionStruct OpenGarage::options[] = {
   {"name", 0, 0, DEFAULT_NAME},
   {"iftt", 0, 0, ""},
   {"mqtt", 0, 0, ""},
+  {"mqpt", 1883, 65535, ""},
   {"mqur", 0, 0, ""},
   {"mqpw", 0, 0, ""},
   {"mqtp", 0, 0, ""},
@@ -84,6 +85,7 @@ OptionStruct OpenGarage::options[] = {
   {"subn", 0, 0, "255.255.255.0"},
   {"dns1", 0, 0, "8.8.8.8"},
   {"ntp1", 0, 0, ""},
+  {"host", 0, 0, ""},
 };
 
 /* Variables and functions for handling Ultrasonic Distance sensor */

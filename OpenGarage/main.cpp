@@ -27,7 +27,7 @@
 
 #include <BlynkSimpleEsp8266.h>
 #include <DNSServer.h>
-#include <PubSubClient.h> //https://github.com/Imroy/pubsubclient
+#include <PubSubClient.h>
 
 #include "pitches.h"
 #include "OpenGarage.h"
@@ -611,6 +611,9 @@ void sta_change_options_main(const char *command) {
       }
     } else {
       if(get_value_by_key(command, key, sval)) {
+	    	// check MQTT password, if it's empty, leave unchanged
+	    	if(i==OPTION_MQPW && sval.length()==0) continue;
+	    	
         o->sval = sval;
       }
     }
@@ -646,14 +649,29 @@ void sta_options_fill_json(String& json) {
   OptionStruct *o = og.options;
   for(byte i=0;i<NUM_OPTIONS;i++,o++) {
     if(!o->max) {
-      if(i==OPTION_PASS || i==OPTION_DKEY) { // do not output password or device key
+      if(i==OPTION_PASS || i==OPTION_DKEY || i==OPTION_MQPW) { // do not output password or device key or MQTT password
         continue;
       } else {
         json += F("\"");
         json += o->name;
         json += F("\":");
         json += F("\"");
-        json += o->sval;
+        // fill in default string values for certain options
+        if(o->sval.length()==0) {
+        	switch(i) {
+        	case OPTION_MQTP:
+        		json += og.options[OPTION_NAME].sval;
+        		break;
+        	case OPTION_HOST:
+        		json += get_ap_ssid();
+        		break;
+        	case OPTION_NTP1:
+        		json += DEFAULT_NTP1;
+        		break;
+        	}
+        } else {
+	        json += o->sval;
+	      }
         json += F("\"");
         json += ",";
       }
@@ -969,16 +987,17 @@ bool mqtt_connect_subscribe() {
       DEBUG_PRINT(F("MQTT Not connected- (Re)connect MQTT"));
       boolean ret;
       if(og.options[OPTION_MQUR].sval.length()>0) { // if MQTT user name is defined
-      	DEBUG_PRINT(F("(with user name)"));
-      	ret = mqttclient.connect(mqtt_id.c_str(), og.options[OPTION_MQUR].sval.c_str(), og.options[OPTION_MQPW].sval.c_str());
+      	DEBUG_PRINT(F(" (authenticated)"));
+      	ret = mqttclient.connect(mqtt_id.c_str(), og.options[OPTION_MQUR].sval.c_str(), og.options[OPTION_MQPW].sval.c_str(), (mqtt_topic+"/OUT/STATUS").c_str(), 1, true, "offline");
       }
       else {
-      	DEBUG_PRINT(F("[w/o user name]"));      
-	      ret = mqttclient.connect(mqtt_id.c_str());
+      	DEBUG_PRINT(F(" [anonymous]"));      
+	      ret = mqttclient.connect(mqtt_id.c_str(), (mqtt_topic+"/OUT/STATUS").c_str(), 1, true, "offline");
 	    }
       if(ret) {
         mqttclient.subscribe(mqtt_topic.c_str());
         mqttclient.subscribe((mqtt_topic +"/IN/#").c_str());
+        mqttclient.publish((mqtt_topic+"/OUT/STATUS").c_str(), "online", true);
         DEBUG_PRINTLN(F("......Success, Subscribed to MQTT Topic"));
         mqtt_subscribe_timeout = curr_utc_time + 5; // if successful, don't check for 5 seconds
         return true;
@@ -1343,7 +1362,7 @@ void time_keeping() {
  	    DEBUG_PRINTLN(og.options[OPTION_NTP1].sval);
 	    configTime(0, 0, og.options[OPTION_NTP1].sval.c_str(), "0.pool.ntp.org", "time.google.com");
 	  } else {
-	  	configTime(0, 0, "0.pool.ntp.org", "time.google.com", "1.pool.ntp.org");
+	  	configTime(0, 0, DEFAULT_NTP1, "time.google.com", "1.pool.ntp.org");
 	  }
 	  delay(2000);
     configured = true;
@@ -1470,10 +1489,12 @@ void do_loop() {
       server->begin();
       DEBUG_PRINTLN(F("Web Server endpoints (STA mode) registered"));
 
-      // use ap ssid as mdns name
-      if(MDNS.begin(get_ap_ssid().c_str(), WiFi.localIP())) {
+      // request mDNS host name
+      String host = og.options[OPTION_HOST].sval;
+      if(host.length()==0) host=get_ap_ssid(); // if undefined, AP name as host
+      if(MDNS.begin(host.c_str(), WiFi.localIP())) {
         DEBUG_PRINT(F("MDNS registered: "));
-        DEBUG_PRINT(get_ap_ssid().c_str());
+        DEBUG_PRINT(host);
         DEBUG_PRINTLN(F(".local"));
         
         MDNS.addService("http", "tcp", og.options[OPTION_HTP].ival);

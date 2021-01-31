@@ -19,7 +19,7 @@
 </select></td></tr>
 
 <tr><td><b>Door Thres. (cm): </b></td><td><input type='text' size=3 maxlength=4 id='dth' data-mini='true' value=0></td></tr>
-<tr><td><b>Car Thres. (cm):</b><br><small>set 0 to disable</small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
+<tr><td><b>Car Thres. (cm):</b><br><small>set to 0 to disable</small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
 <tr><td><b>Status Check (s):</b><br><small>check status every</small></td><td><input type='text' size=3 maxlength=3 id='riv' data-mini='true' value=0></td></tr>
 <tr><td><b>Click Time (ms):</b></td><td><input type='text' size=3 maxlength=5 id='cdt' value=0 data-mini='true'></td></tr>
 <tr><td><b>Switch Sensor:</b><br><small>on G04 and GND</small></td><td>
@@ -66,10 +66,11 @@
 <tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value=''></td></tr>
 <tr><td><b>Blynk Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true' value=0></td></tr>
 <tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='' placeholder='(optional)'></td></tr>
-<tr><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true' value='' placeholder='(optional)' onInput='update_mqtt()'></td></tr>
+<tr><td><b>MQTT Server:</b><br><small>set blank to disable</small></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true' value='' placeholder='(optional)' onInput='update_mqtt()'></td></tr>
+<tr><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true' value=0 disabled></td></tr>
 <tr><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=32 id='mqur' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
-<tr><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=32 id='mqpw' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
-<tr><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' value='' placeholder='(optional)'></td></tr>
+<tr><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' value='' placeholder='(unchanged if left blank)' disabled></td></tr>
+<tr><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
 </table>
 <table>
   <tr><td colspan=4><b>Choose Notifications:</b></td></tr>
@@ -100,6 +101,7 @@
 </fieldset>
 </td></tr>
 <tr><td><b>HTTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='htp' value=0 data-mini='true'></td></tr>
+<tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' value='' data-mini='true' placeholder='(optional)'></td></tr>
 <tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=32 id='ntp1' value='' data-mini='true' placeholder='(optional)'></td></tr>
 <tr><td colspan=2><input type='checkbox' id='usi' data-mini='true'><label for='usi'>Use Static IP</label></td></tr>
 <tr><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true' disabled></td></tr>
@@ -136,9 +138,9 @@ $('#sno').selectmenu('enable');
 }
 function update_mqtt(){
 if($('#mqtt').val().length>0){
-$('#mqur').textinput('enable');$('#mqpw').textinput('enable');$('#mqtp').textinput('enable');
+$('#mqpt').textinput('enable');$('#mqur').textinput('enable');$('#mqpw').textinput('enable');$('#mqtp').textinput('enable');
 }else{
-$('#mqur').textinput('disable');$('#mqpw').textinput('disable');$('#mqtp').textinput('disable');
+$('#mqpt').textinput('disable');$('#mqur').textinput('disable');$('#mqpw').textinput('disable');$('#mqtp').textinput('disable');
 }
 }
 function update_sfi(){
@@ -194,8 +196,9 @@ var noto=0;
 for(var i=1;i>=0;i--) { noto=(noto<<1)+eval_cb('#noto'+i); }
 comm+='&noto='+noto;
 bc('name',1);bc('auth',1);bc('bdmn',1);bc('iftt',1);
-bc('mqtt',1);bc('mqur',1);bc('mqpw',1);bc('mqtp',1);
-bc('bprt');bc('ntp1');
+bc('mqtt',1);bc('mqur',1);bc('mqtp',1);bc('mqpt');
+if($('#mqpw').val().length>0) bc('mqpw',1);
+bc('bprt');bc('ntp1',1);bc('host',1);
 if($('#cb_key').is(':checked')) {
 if(!$('#nkey').val()) {
 if(!confirm('New device key is empty. Are you sure?')) return;
@@ -254,8 +257,8 @@ $('#bprt').val(jd.bprt);
 if(jd.iftt) $('#iftt').val(jd.iftt);
 $('#mqtt').val(jd.mqtt);
 if(jd.mqur) $('#mqur').val(jd.mqur);
-if(jd.mqpw) $('#mqpw').val(jd.mqpw);
 if(jd.mqtp) $('#mqtp').val(jd.mqtp);
+if(jd.mqpt) $('#mqpt').val(jd.mqpt);
 update_mqtt();
 $('#dvip').val(jd.dvip);
 $('#gwip').val(jd.gwip);
@@ -267,6 +270,7 @@ $('#gwip').textinput(jd.usi>0?'enable':'disable');
 $('#subn').textinput(jd.usi>0?'enable':'disable');
 $('#dns1').textinput(jd.usi>0?'enable':'disable');  
 if(jd.ntp1) $('#ntp1').val(jd.ntp1);
+if(jd.host) $('#host').val(jd.host);
 });
 });
 </script>

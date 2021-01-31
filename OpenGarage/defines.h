@@ -48,6 +48,8 @@
 // Log file name
 #define LOG_FNAME       "/log2.dat"
 
+#define DEFAULT_NTP1		"0.pool.ntp.org"
+
 #define OG_SN1_CEILING  0x00	// SN1 is built-in ultrasonic sensor
 #define OG_SN1_SIDE     0x01
 
@@ -165,6 +167,7 @@ typedef enum {
   OPTION_NAME,    // device name
   OPTION_IFTT,    // IFTTT token
   OPTION_MQTT,    // MQTT server
+  OPTION_MQPT,		// MQTT port
   OPTION_MQUR,		// MQTT user name (optional)
   OPTION_MQPW,		// MQTT password (optional)
   OPTION_MQTP,		// MQTT topic (optional)
@@ -173,6 +176,7 @@ typedef enum {
   OPTION_SUBN,    // subnet
   OPTION_DNS1,		// dns1 IP
   OPTION_NTP1,		// custom NTP server
+  OPTION_HOST,		// custom host name
   NUM_OPTIONS     // number of options
 } OG_OPTION_enum;
 
@@ -191,7 +195,7 @@ typedef enum {
 #define TMP_BUFFER_SIZE 100
 
 /** Serial debug functions */
-//#define SERIAL_DEBUG
+#define SERIAL_DEBUG
 #define DEBUG_BEGIN(x)   { Serial.begin(x); }
 
 #if defined(SERIAL_DEBUG)
