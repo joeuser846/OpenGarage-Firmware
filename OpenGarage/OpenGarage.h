@@ -44,6 +44,7 @@ struct LogStruct {
   ulong tstamp; // time stamp
   uint status;  // door status
   uint dist;    // distance
+  byte sn2;			// switch sensor value
 };
 
 class OpenGarage {
@@ -64,7 +65,7 @@ public:
   static void read_TH_sensor(float& C, float &H);
   static byte get_mode()   { return options[OPTION_MOD].ival; }
   static byte get_button() { return digitalRead(PIN_BUTTON); }
-  static byte get_switch() { return digitalRead(PIN_SWITCH); }
+  static byte get_switch() { pinMode(PIN_SWITCH, INPUT_PULLUP); return digitalRead(PIN_SWITCH); }
   static byte get_led()    { return led_reverse?(!digitalRead(PIN_LED)):digitalRead(PIN_LED); }
   static bool get_cloud_access_en();
   static void set_led(byte status)   { digitalWrite(PIN_LED, led_reverse?(!status):status); }
@@ -101,7 +102,6 @@ public:
   static void config_ip();
   static void play_startup_tune();
 private:
-  static ulong read_distance_once();
   static File log_file;
   static void button_handler();
   static void led_handler();

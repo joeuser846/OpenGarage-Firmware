@@ -12,38 +12,28 @@
 <div id='div_basic'>
 <table cellpadding=2>
 <tr><td><b>Device Name:</b></td><td><input type='text' size=10 maxlength=32 id='name' data-mini='true' value='-'></td></tr>
-<tr><td><b>Door Sensor:</b></td><td>
-<select name='mnt' id='mnt' data-mini='true' onChange='disable_dth()'>
+<tr><td><b>Distance Sensor:</b><br><small>mounting method</small></td><td>
+<select name='sn1' id='sn1' data-mini='true'>
 <option value=0>Ceiling Mount</option>
 <option value=1>Side Mount</option>
-<option value=2>Norm. Closed Switch on G04</option>
-<option value=3>Norm. Open Switch on G04</option>
 </select></td></tr>
+
 <tr><td><b>Door Thres. (cm): </b></td><td><input type='text' size=3 maxlength=4 id='dth' data-mini='true' value=0></td></tr>
-<tr><td><b>Car Thres. (cm):</b><br><small>(Set 0 to disable) </small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
-<tr><td><b>Read Interval (s):</b></td><td><input type='text' size=3 maxlength=3 id='riv' data-mini='true' value=0></td></tr>
+<tr><td><b>Car Thres. (cm):</b><br><small>set to 0 to disable</small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
+<tr><td><b>Status Check (s):</b><br><small>check status every</small></td><td><input type='text' size=3 maxlength=3 id='riv' data-mini='true' value=0></td></tr>
 <tr><td><b>Click Time (ms):</b></td><td><input type='text' size=3 maxlength=5 id='cdt' value=0 data-mini='true'></td></tr>
-<tr><td><b>Dist. Read (ms):</b></td><td><input type='text' size=3 maxlength=5 id='dri' value=0 data-mini='true'></td></tr>
-<tr><td><b>Sensor Timeout:</b></td><td>
-<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
-<input type='radio' name='rd_to' id='to_ignore' value=0><label for='to_ignore'>Ignore</label>
-<input type='radio' name='rd_to' id='to_cap' value=1><label for='to_cap'>Cap</label>
-</fieldset>
-</td></tr>
-<tr><td><b>Sound Alarm:</b></td><td>
-<select name='alm' id='alm' data-mini='true'>
-<option value=0>Disabled</option>
-<option value=1>5 seconds</option>
-<option value=2>10 seconds</option>
+<tr><td><b>Switch Sensor:</b><br><small>on G04 and GND</small></td><td>
+<select name='sn2' id='sn2' data-mini='true' onChange='update_sno()'>
+<option value=0>(none)</option>
+<option value=1>Normally Closed</option>
+<option value=2>Normally Open</option>
 </select></td></tr>
-<tr><td colspan=2><input type='checkbox' id='aoo' data-mini='true'><label for='aoo'>Do not alarm when opening</label></td></tr>
-<tr><td><b>Log Size:<a href='#lszInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Important note</a><div data-role='popup' id='lszInfo' class='ui-content' data-theme='b' style='max-width:320px;'><p>If you change log size, please Clear Log for the new size to take effect.</p></div></b></td><td>
-<select name='lsz' id='lsz' data-mini='true'>
-<option value=20>20</option>
-<option value=50>50</option>
-<option value=100>100</option>
-<option value=200>200</option>
-<option value=400>400</option>
+<tr><td><b>Sensor Logic:</b><a href='#snoInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Explanation</a><div data-role='popup' id='snoInfo' class='ui-content' data-theme='b' style='max-width:250px;'><p>Choose which sensor(s) determine door 'open' status.</p></div></td><td>
+<select name='sno' id='sno' data-mini='true' disabled='true'>
+<option value=0>Dist. sensor only</option>
+<option value=1>Switch sensor only</option>
+<option value=2>Dist. AND Switch</option>
+<option value=3>Dist. OR Switch</option>
 </select></td></tr>
 <tr><td><b>T/H Sensor:</b></td><td>
 <select name='tsn' id='tsn' data-mini='true'>
@@ -53,15 +43,34 @@
 <option value=3>DHT22 on G05</option>
 <option value=4>DS18B20 on G05</option>
 </select></td></tr>
+<tr><td><b>Sound Alarm:</b></td><td>
+<select name='alm' id='alm' data-mini='true'>
+<option value=0>Disabled</option>
+<option value=1>5 seconds</option>
+<option value=2>10 seconds</option>
+</select></td></tr>
+<tr><td colspan=2><input type='checkbox' id='aoo' data-mini='true'><label for='aoo'>Do not alarm when opening</label></td></tr>
+<tr><td><b>Log Size:</b><a href='#lszInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Important note</a><div data-role='popup' id='lszInfo' class='ui-content' data-theme='b' style='max-width:280px;'><p>If you change log size, please Clear Log for the new size to take effect.</p></div></td><td>
+<select name='lsz' id='lsz' data-mini='true'>
+<option value=20>20</option>
+<option value=50>50</option>
+<option value=100>100</option>
+<option value=200>200</option>
+<option value=400>400</option>
+</select></td></tr>
 </table>
 </div>
 <div id='div_cloud' style='display:none;'>
 <table cellpadding=1>
-<tr><td><b>Blynk Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true' value='-'></td></tr>
-<tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value='-'></td></tr>
+<tr><td><b>Blynk Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true' value='' placeholder='(optional)'></td></tr>
+<tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value=''></td></tr>
 <tr><td><b>Blynk Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true' value=0></td></tr>
-<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='-'></td></tr>
-<tr><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=20 id='mqtt' data-mini='true' value=''></td></tr>
+<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='' placeholder='(optional)'></td></tr>
+<tr><td><b>MQTT Server:</b><br><small>set blank to disable</small></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true' value='' placeholder='(optional)' onInput='update_mqtt()'></td></tr>
+<tr><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true' value=0 disabled></td></tr>
+<tr><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=32 id='mqur' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
+<tr><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' value='' placeholder='(unchanged if left blank)' disabled></td></tr>
+<tr><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
 </table>
 <table>
   <tr><td colspan=4><b>Choose Notifications:</b></td></tr>
@@ -77,7 +86,23 @@
 </div>
 <div id='div_other' style='display:none;'>
 <table cellpadding=2>
+<tr><td><b>Read Intv. (ms):</b><br><small>read sensor every</small></td><td><input type='text' size=3 maxlength=5 id='dri' value=0 data-mini='true'></td></tr>
+<tr><td><b>Sensor Filter:</b><br><small>noise filter method</small></td><td>
+<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
+<input type='radio' name='rd_sf' id='sf_med' value=0 onclick='update_sfi()'><label for='sf_med'>Median</label>
+<input type='radio' name='rd_sf' id='sf_con' value=1 onclick='update_sfi()'><label for='sf_con'>Consensus</label>
+</fieldset>
+</td></tr>
+<tr id='tbl_cmr' style='display:none;'><td><b>Margin (cm):</b></td><td><input type='text' size=5 maxlength=5 id='cmr' value=10 data-mini='true'></td></tr>
+<tr><td><b>Dist. Timeout:</b><br><small>timeout handling</small></td><td>
+<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
+<input type='radio' name='rd_to' id='to_ignore' value=0><label for='to_ignore'>Ignore</label>
+<input type='radio' name='rd_to' id='to_cap' value=1><label for='to_cap'>Cap</label>
+</fieldset>
+</td></tr>
 <tr><td><b>HTTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='htp' value=0 data-mini='true'></td></tr>
+<tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' value='' data-mini='true' placeholder='(optional)'></td></tr>
+<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=32 id='ntp1' value='' data-mini='true' placeholder='(optional)'></td></tr>
 <tr><td colspan=2><input type='checkbox' id='usi' data-mini='true'><label for='usi'>Use Static IP</label></td></tr>
 <tr><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true' disabled></td></tr>
 <tr><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true' disabled></td></tr>
@@ -106,11 +131,21 @@
 </div>
 <script>
 function clear_msg() {$('#msg').text('');}
-function disable_dth(){
-if (parseInt($('#mnt option:selected').val()) >1){
-$('#dth').textinput('disable'); 
-$('#vth').textinput('disable'); 
-}else{$('#dth').textinput('enable');}
+function update_sno(){
+if(parseInt($('#sn2 option:selected').val())>0){
+$('#sno').selectmenu('enable'); 
+}else{$('#sno').selectmenu('disable');}
+}
+function update_mqtt(){
+if($('#mqtt').val().length>0){
+$('#mqpt').textinput('enable');$('#mqur').textinput('enable');$('#mqpw').textinput('enable');$('#mqtp').textinput('enable');
+}else{
+$('#mqpt').textinput('disable');$('#mqur').textinput('disable');$('#mqpw').textinput('disable');$('#mqtp').textinput('disable');
+}
+}
+function update_sfi(){
+if(eval_cb('#sf_con')) $('#tbl_cmr').show();
+else $('#tbl_cmr').hide();
 }
 function show_msg(s) {$('#msg').text(s).css('color','red'); setTimeout(clear_msg, 2000);}
 function goback() {history.back();}
@@ -136,24 +171,21 @@ if(eval_cb('#other')) $('#div_other').show();
 $('#btn_back').click(function(e){
 e.preventDefault(); goback();
 });
+var comm;
+function bc(n,e=0) {comm+='&'+n+'=';
+if(e) comm+=encodeURIComponent($('#'+n).val());
+else comm+=$('#'+n).val();
+}
 $('#btn_submit').click(function(e){
 e.preventDefault();
 if(confirm('Submit changes?')) {
-var comm='co?dkey='+encodeURIComponent($('#dkey').val());
-comm+='&mnt='+$('#mnt').val();
-comm+='&dth='+$('#dth').val();
-comm+='&vth='+$('#vth').val();
-comm+='&riv='+$('#riv').val();
-comm+='&alm='+$('#alm').val();
+comm='co?dkey='+encodeURIComponent($('#dkey').val());
+bc('sn1');bc('sn2');bc('sno');bc('dth');bc('vth');bc('riv');bc('alm');
+bc('lsz');bc('tsn');bc('htp');bc('cdt');bc('dri');bc('ati');bc('atib');
 comm+='&aoo='+($('#aoo').is(':checked')?1:0);
-comm+='&lsz='+$('#lsz').val();
-comm+='&tsn='+$('#tsn').val();
-comm+='&htp='+$('#htp').val();
-comm+='&cdt='+$('#cdt').val();
-comm+='&dri='+$('#dri').val();
 comm+='&sto='+eval_cb('#to_cap');
-comm+='&ati='+$('#ati').val();
-comm+='&atib='+$('#atib').val();
+comm+='&sfi='+eval_cb('#sf_con');
+if(eval_cb('#sf_con')) bc('cmr');
 var ato=0;
 for(var i=1;i>=0;i--) { ato=(ato<<1)+eval_cb('#ato'+i); }
 comm+='&ato='+ato;
@@ -163,21 +195,19 @@ comm+='&atob='+atob;
 var noto=0;
 for(var i=1;i>=0;i--) { noto=(noto<<1)+eval_cb('#noto'+i); }
 comm+='&noto='+noto;
-comm+='&name='+encodeURIComponent($('#name').val());
-comm+='&auth='+encodeURIComponent($('#auth').val());
-comm+='&bdmn='+encodeURIComponent($('#bdmn').val());
-comm+='&bprt='+$('#bprt').val();
-comm+='&iftt='+encodeURIComponent($('#iftt').val());
-comm+='&mqtt='+encodeURIComponent($('#mqtt').val());
+bc('name',1);bc('auth',1);bc('bdmn',1);bc('iftt',1);
+bc('mqtt',1);bc('mqur',1);bc('mqtp',1);bc('mqpt');
+if($('#mqpw').val().length>0) bc('mqpw',1);
+bc('bprt');bc('ntp1',1);bc('host',1);
 if($('#cb_key').is(':checked')) {
 if(!$('#nkey').val()) {
 if(!confirm('New device key is empty. Are you sure?')) return;
 }
-comm+='&nkey='+encodeURIComponent($('#nkey').val());
-comm+='&ckey='+encodeURIComponent($('#ckey').val());
+bc('nkey',1);bc('ckey',1);
 }
 if($('#usi').is(':checked')) {
-comm+='&usi=1&dvip='+($('#dvip').val())+'&gwip='+($('#gwip').val())+'&subn='+($('#subn').val())+'&dns1='+($('#dns1').val());
+comm+='&usi=1';
+bc('dvip');bc('gwip')+bc('subn');bc('dns1');
 } else {
 comm+='&usi=0';
 }
@@ -199,9 +229,10 @@ $('#alm').val(jd.alm).selectmenu('refresh');
 if(jd.aoo>0) $('#aoo').attr('checked',true).checkboxradio('refresh');
 $('#lsz').val(jd.lsz).selectmenu('refresh');
 $('#tsn').val(jd.tsn).selectmenu('refresh');
-$('#mnt').val(jd.mnt).selectmenu('refresh');
-if(jd.mnt>1) $('#dth').textinput('disable'); 
-if(jd.mnt>0) $('#vth').textinput('disable'); 
+$('#sn1').val(jd.sn1).selectmenu('refresh');
+$('#sn2').val(jd.sn2).selectmenu('refresh');
+$('#sno').val(jd.sno).selectmenu('refresh');
+update_sno();
 $('#dth').val(jd.dth);
 $('#vth').val(jd.vth);
 $('#riv').val(jd.riv);
@@ -210,6 +241,10 @@ $('#cdt').val(jd.cdt);
 $('#dri').val(jd.dri);
 if(jd.sto) $('#to_cap').attr('checked',true).checkboxradio('refresh');
 else $('#to_ignore').attr('checked',true).checkboxradio('refresh');
+if(jd.sfi) $('#sf_con').attr('checked',true).checkboxradio('refresh');
+else $('#sf_med').attr('checked',true).checkboxradio('refresh');
+if(jd.cmr) $('#cmr').val(jd.cmr);
+update_sfi();
 $('#ati').val(jd.ati);
 $('#atib').val(jd.atib);
 for(var i=0;i<=1;i++) {if(jd.ato&(1<<i)) $('#ato'+i).attr('checked',true).checkboxradio('refresh');}
@@ -219,8 +254,12 @@ $('#name').val(jd.name);
 $('#auth').val(jd.auth);
 $('#bdmn').val(jd.bdmn);
 $('#bprt').val(jd.bprt);
-$('#iftt').val(jd.iftt);
+if(jd.iftt) $('#iftt').val(jd.iftt);
 $('#mqtt').val(jd.mqtt);
+if(jd.mqur) $('#mqur').val(jd.mqur);
+if(jd.mqtp) $('#mqtp').val(jd.mqtp);
+if(jd.mqpt) $('#mqpt').val(jd.mqpt);
+update_mqtt();
 $('#dvip').val(jd.dvip);
 $('#gwip').val(jd.gwip);
 $('#subn').val(jd.subn);
@@ -230,6 +269,8 @@ $('#dvip').textinput(jd.usi>0?'enable':'disable');
 $('#gwip').textinput(jd.usi>0?'enable':'disable');
 $('#subn').textinput(jd.usi>0?'enable':'disable');
 $('#dns1').textinput(jd.usi>0?'enable':'disable');  
+if(jd.ntp1) $('#ntp1').val(jd.ntp1);
+if(jd.host) $('#host').val(jd.host);
 });
 });
 </script>
