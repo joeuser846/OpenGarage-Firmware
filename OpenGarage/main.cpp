@@ -528,12 +528,12 @@ void sta_change_options_main(const OTF::Request &req, OTF::Response &res) {
 	const char* _nkey = "nkey";
 	const char* _ckey = "ckey";
 
-	String nkey = req.getQueryParameter(_nkey);
-	String ckey = req.getQueryParameter(_ckey);
+	char* nkey = req.getQueryParameter(_nkey);
+	char* ckey = req.getQueryParameter(_ckey);
 
 	if(nkey != NULL) {
 		if(ckey != NULL) {
-			if(!nkey.equals(ckey)) {
+			if(strcmp(nkey,ckey)!=0) {
 				otf_send_result(res, HTML_MISMATCH, _ckey);
 				return;
 			}

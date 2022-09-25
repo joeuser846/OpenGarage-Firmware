@@ -397,7 +397,7 @@ void OpenGarage::write_log(const LogStruct& data) {
 		LogStruct l;
 		l.tstamp = 0;
 		for(;next<MAX_LOG_SIZE;next++) {  // pre-fill the log file to maximum size
-		  file.write((const byte*)&l, sizeof(LogStruct));
+			file.write((const byte*)&l, sizeof(LogStruct));
 		}
 	} else {
 		file = FILESYS.open(log_fname, "r+");
@@ -413,7 +413,7 @@ void OpenGarage::write_log(const LogStruct& data) {
 		file.seek(sizeof(curr)+curr*sizeof(LogStruct), SeekSet);
 		file.write((const byte*)&data, sizeof(LogStruct));
 	}
-	DEBUG_PRINTLN(F("ok"));      
+	DEBUG_PRINTLN(F("ok"));
 	file.close();
 }
 

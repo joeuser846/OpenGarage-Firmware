@@ -353,7 +353,7 @@ setTimeout(show_log, 10000);
 </script>
 </body>
 )";
-const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='https://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css' type='text/css'><script src='https://code.jquery.com/jquery-1.9.1.min.js' type='text/javascript'></script><script src='https://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js' type='text/javascript'></script></head>
+const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta name='viewport' content='width=device-width, initial-scale=1'><link rel='stylesheet' href='//code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css' type='text/css'><script src='//code.jquery.com/jquery-1.9.1.min.js' type='text/javascript'></script><script src='//code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js' type='text/javascript'></script></head>
 <body>
 <style> table, th, td { border: 0px solid black; padding: 1px; border-collapse: collapse; } .ui-select{width:160px;}</style>
 <div data-role='page' id='page_opts'>
@@ -643,10 +643,6 @@ $('#subn').val(jd.subn);
 $('#dns1').val(jd.dns1);
 if(jd.usi>0) cbt('usi');
 update_usi();
-$('#dvip').textinput(jd.usi>0?'enable':'disable');
-$('#gwip').textinput(jd.usi>0?'enable':'disable');
-$('#subn').textinput(jd.usi>0?'enable':'disable');
-$('#dns1').textinput(jd.usi>0?'enable':'disable');  
 if(jd.ntp1) $('#ntp1').val(jd.ntp1);
 if(jd.host) $('#host').val(jd.host);
 });
