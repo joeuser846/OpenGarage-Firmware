@@ -1,9 +1,9 @@
 
-This folder contains firmware source code and documentation for OpenGarage. For details, visit [http://opengarage.io](http://opengarage.io)
+This folder contains firmware source code and documentation for OpenGarage. For proudct details, visit [http://opengarage.io](http://opengarage.io)
 
 For Firmware release notes, go to [https://github.com/OpenGarage/OpenGarage-Firmware/releases](https://github.com/OpenGarage/OpenGarage-Firmware/releases)
 
-<img src="Screenshots/1_og_ap.jpg" height=350> <img src="Screenshots/2_og_home.jpg" height=350> <img src="Screenshots/3_og_log.jpg" height=350> <img src="Screenshots/4_og_options_basic.jpg" height=350><img src="Screenshots/5_og_options_integration.jpg" height=350> <img src="Screenshots/6_og_options_advanced.jpg" height=350> <img src="Screenshots/7_og_update.jpg" height=350> <img src="Screenshots/8_og_blynk_app.jpg" height=350>
+<img src="Screenshots/1_og_ap.jpg" height=350> <img src="Screenshots/2_og_home.jpg" height=350> <img src="Screenshots/3_og_log.jpg" height=350> <img src="Screenshots/4_og_options_basic.jpg" height=350><img src="Screenshots/5_og_options_integration1.jpg" height=350> <img src="Screenshots/5_og_options_integration2.jpg" height=350> <img src="Screenshots/6_og_options_advanced.jpg" height=350> <img src="Screenshots/7_og_update.jpg" height=350>
 
 
 ### Firmware Compilation Instructions:
@@ -12,12 +12,14 @@ For Firmware release notes, go to [https://github.com/OpenGarage/OpenGarage-Firm
 
 * Arduino (https://arduino.cc) with ESP8266 core 2.7.4 or above for Arduino (https://github.com/esp8266/Arduino/releases/tag/2.7.4)
 * Instead of installing Arduino, you can also directly use make (this folder includes a copy of **makeESPArduino**: https://github.com/plerup/makeEspArduino)
-* Blynk library for Arduino (https://github.com/blynkkk/blynk-library)
-* MQTT PubSUbClient https://github.com/knolleary/pubsubclient (version 2.8)
-* AM2320 library: https://github.com/hibikiledo/AM2320/releases
+* Blynk library for Arduino (https://github.com/blynkkk/blynk-library) (v1.0.1)
+* MQTT PubSUbClient https://github.com/knolleary/pubsubclient (v2.8)
+* AM2320 library: https://github.com/hibikiledo/AM2320/releases (v1.1.3)
 * OneWire library: https://www.pjrc.com/teensy/td_libs_OneWire.html
-* DallasTemperature library: https://github.com/milesburton/Arduino-Temperature-Control-Library/releases
-* DHTesp library: https://github.com/beegee-tokyo/DHTesp/releases
+* DallasTemperature library: https://github.com/milesburton/Arduino-Temperature-Control-Library/releases (v3.9.1)
+* DHTesp library: https://github.com/beegee-tokyo/DHTesp/releases (v1.18)
+* OpenThingsFramework library: https://github.com/OpenThingsIO/OpenThings-Framework-Firmware-Library
+* WebSocket library: https://github.com/Links2004/arduinoWebSockets/releases (v2.3.5)
 
 * This (OpenGarage) source code
 
@@ -36,7 +38,7 @@ To compile using Arduino: launch Arduino, and select
 * File -> Examples -> OpenGarage -> mainArduino.
 * Tools -> Board -> Generic ESP8266 Module (if this is not available, check if you've installed the ESP8266 core).
 * Tools -> Flash Mode -> DIO.
-* Tools -> Flash Size -> 2M (1M SPIFFS).
+* Tools -> Flash Size -> **4M (1M SPIFFS)**.
 
 Press Ctrl + R to compile. The compiled firmware (named mainArduino.cpp.bin) is by default copied to a temporary folder.
 
