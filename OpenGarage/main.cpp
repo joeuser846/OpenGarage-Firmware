@@ -355,7 +355,7 @@ void on_sta_logs(const OTF::Request &req, OTF::Response &res) {
 }
 
 bool verify_device_key(const OTF::Request &req) {
-	if(req.isCloudRequest()){
+	if(req.isCloudRequest()){ // no need for dkey if this is coming from cloud connection
 		return true;
 	}
 	const char *dkey = req.getQueryParameter("dkey");
@@ -567,7 +567,7 @@ void sta_change_options_main(const OTF::Request &req, OTF::Response &res) {
 		og.options[OPTION_DVIP].sval = dvip;
 		og.options[OPTION_GWIP].sval = gwip;
 		if(subn != NULL) {
-		  og.options[OPTION_SUBN].sval = subn;
+			og.options[OPTION_SUBN].sval = subn;
 		}
 		if(dns1 != NULL) {
 			og.options[OPTION_DNS1].sval = dns1;
@@ -607,12 +607,12 @@ void sta_options_fill_json(String& json) {
 					case OPTION_HOST:
 						json += get_ap_ssid();
 						break;
-					//case OPTION_NTP1:
+					//case OPTION_NTP1: // leave NPT1 empty if using default
 					//json += DEFAULT_NTP1;
 					//break;
 					}
 				} else {
-				  json += o->sval;
+					json += o->sval;
 				}
 				json += F("\"");
 				json += ",";
@@ -690,14 +690,7 @@ void on_ap_try_connect(const OTF::Request &req, OTF::Response &res) {
 	json += F("}");
 	otf_send_json(res, json);
 	if(WiFi.status() == WL_CONNECTED && WiFi.localIP()) {
-		/*DEBUG_PRINTLN(F("STA connected, updating option file"));
-		og.options[OPTION_MOD].ival = OG_MOD_STA;
-		if(og.options[OPTION_AUTH].sval.length() == 32) {
-		  og.options[OPTION_ACC].ival = OG_ACC_BOTH;
-		}
-		og.options_save();*/
 		DEBUG_PRINTLN(F("IP received by client, restart."));
-		//restart_ticker.once_ms(1000, og.restart); // restart once client receives IP address
 		restart_in(1000);
 	}
 }
@@ -1013,7 +1006,7 @@ void perform_notify(String s) {
 
 	//Mqtt notification
 
-	if(valid_url(og.options[OPTION_MQTT].sval)) {
+	if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) {
 		if (mqttclient.connected()) {
 		    DEBUG_PRINTLN(" Sending MQTT Notification");
 		    mqttclient.publish((mqtt_topic + "/OUT/NOTIFY").c_str(),s.c_str()); 
@@ -1192,73 +1185,20 @@ void check_status() {
 			if(og.options[OPTION_SN2].ival>OG_SN2_NONE) l.sn2 = sn2_value;
 			og.write_log(l);
 
-#if 0
-      //Debug Beep (only if sound is enabled)
-      if(og.options[OPTION_ALM].ival){
-        og.play_note(1000);
-        delay(500);
-        og.play_note(0);
-      }
-      DEBUG_PRINT(curr_utc_time);
-      if(event == DOOR_STATUS_JUST_OPENED)  {	
-        DEBUG_PRINTLN(F(" Sending State Change event to connected systems, value: DOOR_STATUS_JUST_OPENED")); }
-      else if(event == DOOR_STATUS_JUST_CLOSED) {	
-        DEBUG_PRINTLN(F(" Sending State Change event to connected systems, value: DOOR_STATUS_JUST_CLOSED")); }
-#endif
-      
-      // Blynk notification
-#if 0
-      byte ato = og.options[OPTION_ATO].ival;
-      if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected() && ato) {
-        //The official firmware only sends these notifications on ato enabled (which seems a somewhat unrelated function)
-        //Maintain backwards compat and use same logic
-        DEBUG_PRINTLN(F(" Notify Blynk with text notification"));
-        if(event == DOOR_STATUS_JUST_OPENED)  {	
-          Blynk.notify(og.options[OPTION_NAME].sval + " just opened!");}
-        else if(event == DOOR_STATUS_JUST_CLOSED) {	
-          Blynk.notify(og.options[OPTION_NAME].sval + " just closed!");}
-      }
+		} //End state change updates
 
-      // IFTTT notification
-      if(og.options[OPTION_IFTT].sval.length()>7) { // key size is at least 8
-        DEBUG_PRINTLN(F(" Notify IFTTT (State Change)")); 
-        http.begin("http://maker.ifttt.com/trigger/opengarage/with/key/"+og.options[OPTION_IFTT].sval);
-        http.addHeader("Content-Type", "application/json");
-        http.POST("{\"value1\":\""+String(event,DEC)+"\"}");
-        String payload = http.getString();
-        http.end();
-        if(payload.indexOf("Congratulations") >= 0) {
-          DEBUG_PRINTLN(F("  Successfully updated IFTTT"));
-        }else{
-          DEBUG_PRINT(F("  ERROR from IFTTT: "));
-          DEBUG_PRINTLN(payload);
-        }
-      }
-
-      //Mqtt notification
-      if(valid_url(og.options[OPTION_MQTT].sval)) {
-        if (mqttclient.connected()) {
-          DEBUG_PRINTLN(F(" Update MQTT (State Change)"));
-          mqttclient.publish((mqtt_topic + "/OUT/CHANGE").c_str(),String(event,DEC)); 
-        }
-      }
+		//Send current status only on change and longer interval
+		if ((curr_utc_time >checkstatus_report_timeout) || (event == DOOR_STATUS_JUST_OPENED || event == DOOR_STATUS_JUST_CLOSED) ){
+		#if 0
+			DEBUG_PRINT(curr_utc_time);
+			if(event == DOOR_STATUS_REMAIN_OPEN)  {	
+				DEBUG_PRINTLN(F(" Sending State Refresh to connected systems, value: OPEN")); }
+			else if(event == DOOR_STATUS_REMAIN_CLOSED) {	
+				DEBUG_PRINTLN(F(" Sending State Refresh to connected systems, value: CLOSED")); }
 #endif
-    } //End state change updates
-
-    //Send current status only on change and longer interval
-    if ((curr_utc_time >checkstatus_report_timeout) || (event == DOOR_STATUS_JUST_OPENED || event == DOOR_STATUS_JUST_CLOSED) ){
-#if 0
-      DEBUG_PRINT(curr_utc_time);
-      if(event == DOOR_STATUS_REMAIN_OPEN)  {	
-        DEBUG_PRINTLN(F(" Sending State Refresh to connected systems, value: OPEN")); }
-      else if(event == DOOR_STATUS_REMAIN_CLOSED) {	
-        DEBUG_PRINTLN(F(" Sending State Refresh to connected systems, value: CLOSED")); }
-#endif
-      
-      //IFTTT only recieves state change events not ongoing status
 
 			//Mqtt update
-			if(valid_url(og.options[OPTION_MQTT].sval) && (mqttclient.connected())) {
+			if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval) && (mqttclient.connected())) {
 				DEBUG_PRINTLN(F(" Update MQTT (State Refresh)"));
 				if(door_status == DOOR_STATUS_REMAIN_OPEN)  {						// MQTT: If door open...
 					mqttclient.publish((mqtt_topic + "/OUT/STATE").c_str(),"OPEN");
@@ -1526,12 +1466,12 @@ void do_loop() {
 			  Blynk.run();
 
 			//Handle MQTT
-			if(valid_url(og.options[OPTION_MQTT].sval)) {
+			if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) { // if enabled and mqtt server looks valid
 				if (!mqttclient.connected()) {
 					mqtt_id = get_ap_ssid();
 					mqtt_topic = og.options[OPTION_MQTP].sval;
 					if(mqtt_topic.length()==0) mqtt_topic = og.options[OPTION_NAME].sval;
-					mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), 1883);
+					mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), og.options[OPTION_MQPT].ival);
 					mqttclient.setCallback(mqtt_callback); 		
 					mqtt_connect_subscribe();
 					}

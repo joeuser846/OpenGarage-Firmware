@@ -451,9 +451,9 @@ void OpenGarage::config_ip() {
 	if(options[OPTION_USI].ival) {
 		IPAddress dvip, gwip, subn, dns1;
 		if(dvip.fromString(options[OPTION_DVIP].sval) &&
-			gwip.fromString(options[OPTION_GWIP].sval) &&
-			subn.fromString(options[OPTION_SUBN].sval) &&
-			dns1.fromString(options[OPTION_DNS1].sval)) {
+		   gwip.fromString(options[OPTION_GWIP].sval) &&
+		   subn.fromString(options[OPTION_SUBN].sval) &&
+		   dns1.fromString(options[OPTION_DNS1].sval)) {
 			WiFi.config(dvip, gwip, subn, dns1, gwip);
 		}
 	}
