@@ -711,10 +711,10 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 	payload[length]=0;
 	String Payload((char*)payload);
 	String Topic(topic);
-	DEBUG_PRINT("MQTT Message Received: ");
+	/*DEBUG_PRINT("MQTT Message Received: ");
 	DEBUG_PRINT(Topic);
 	DEBUG_PRINT(" Data: ");
-	DEBUG_PRINTLN(Payload);
+	DEBUG_PRINTLN(Payload);*/
 
 	//Accept button on any topic for backwards compat with existing code - use IN messages below if possible
 	if (Payload=="Button") {
