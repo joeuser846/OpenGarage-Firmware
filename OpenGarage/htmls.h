@@ -121,7 +121,7 @@ const char ap_update_html[] PROGMEM = R"(<head>
 <form method='POST' action='/update' id='fm' enctype='multipart/form-data'>
 <table cellspacing=4>
 <tr><td><input type='file' name='file' accept='.bin' id='file'></td></tr>
-<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=32 id='dkey'></td></tr>
+<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=64 id='dkey'></td></tr>
 <tr><td><label id='msg'></label></td></tr>
 </table>
 <button id='btn_submit' style='height:48px;'>Submit</a>
@@ -181,7 +181,7 @@ const char sta_home_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta nam
 <tr><td><b>WiFi Signal:</b></td><td colspan='2'><label id='lbl_rssi'>-</label></td></tr>
 <tr><td><b>Cloud:</b></td><td colspan='2'><label id='lbl_cld'>-</label></td></tr>
 <tr id='tbl_th' style='display:none;'><td><b>T/H sensor:</b></td><td colspan='2'><label id='lbl_th'>-</label></td></tr>
-<tr><td><b>Device Key:</b></td><td colspan='2' ><input type='password' size=20 maxlength=32 name='dkey' id='dkey'></td></tr>
+<tr><td><b>Device Key:</b></td><td colspan='2' ><input type='password' size=20 maxlength=64 name='dkey' id='dkey'></td></tr>
 <tr><td colspan=3><label id='msg'></label></td></tr>
 </table><br />
 <div data-role='controlgroup' data-type='horizontal'>
@@ -432,16 +432,16 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 <input type='radio' name='rd_ct' id='otc' onclick='update_ct()'><label for='otc'>OTC</label>
 </fieldset>
 </td>
-<tr class='cld'><td><b>Cloud Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true'></td></tr>
-<tr class='cld'><td><b>Cloud Server:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Token:</b></td><td><input type='text' size=20 maxlength=64 id='auth' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Server:</b></td><td><input type='text' size=20 maxlength=64 id='bdmn' data-mini='true'></td></tr>
 <tr class='cld'><td><b>Cloud Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true'></td></tr>
 <tr class='cld'><td colspan=2><hr></td></tr>
 <tr><td colspan=2><input type='checkbox' id='mqen' data-mini='true' onclick='update_mqtt()'><label for='mqen'>Enable MQTT</label></td></tr>
-<tr class='mqt'><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true'></td></tr>
+<tr class='mqt'><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=64 id='mqtt' data-mini='true'></td></tr>
 <tr class='mqt'><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true'></td></tr>
-<tr class='mqt'><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=32 id='mqur' data-mini='true' placeholder='(optional)'></td></tr>
+<tr class='mqt'><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=64 id='mqur' data-mini='true' placeholder='(optional)'></td></tr>
 <tr class='mqt'><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' placeholder='(unchanged if left blank)'></td></tr>
-<tr class='mqt'><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' placeholder='(optional)'></td></tr>
+<tr class='mqt'><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=64 id='mqtp' data-mini='true' placeholder='(optional)'></td></tr>
 <tr class='mqt'><td colspan=2><hr></td></tr>
 <tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' placeholder='(optional)'></td></tr>
 </table>
@@ -476,12 +476,12 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </td></tr>
 <tr><td><b>HTTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='htp' value=0 data-mini='true'></td></tr>
 <tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' data-mini='true' placeholder='(optional)'></td></tr>
-<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=32 id='ntp1' data-mini='true' placeholder='(optional)'></td></tr>
+<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=64 id='ntp1' data-mini='true' placeholder='(optional)'></td></tr>
 <tr><td colspan=2><input type='checkbox' id='usi' data-mini='true' onclick='update_usi()'><label for='usi'>Use Static IP</label></td></tr>
 <tr class='si'><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true'></td></tr>
 <tr class='si'><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true'></td></tr>
 <tr class='si'><td><b>Subnet:</b></td><td><input type='text' size=15 maxlength=15 id='subn' data-mini='true'></td></tr>
-<tr class='si'><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=15 id='dns1' data-mini='true'></td></tr>
+<tr class='si'><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=64 id='dns1' data-mini='true'></td></tr>
 <tr><td colspan=2><input type='checkbox' id='cb_key' data-mini='true' onclick='update_ckey()'><label for='cb_key'>Change Device Key</label></td></tr>
 <tr class='ckey'><td><b>New Key:</b></td><td><input type='password' size=16 maxlength=64 id='nkey' data-mini='true'></td></tr>
 <tr class='ckey'><td><b>Confirm:</b></td><td><input type='password' size=16 maxlength=64 id='ckey' data-mini='true'></td></tr>      
@@ -489,7 +489,7 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </div>
 <br />
 <table cellpadding=2>
-<tr><td><b>Device Key:</b></td><td><input type='password' size=24 maxlength=32 id='dkey' data-mini='true'></td></tr>
+<tr><td><b>Device Key:</b></td><td><input type='password' size=24 maxlength=64 id='dkey' data-mini='true'></td></tr>
 <tr><td colspan=2><p id='msg'></p></td></tr>
 </table>
 <div data-role='controlgroup' data-type='horizontal'>
@@ -674,7 +674,7 @@ const char sta_update_html[] PROGMEM = R"(<head>
 <form method='POST' action='' id='fm' enctype='multipart/form-data'>
 <table cellspacing=4>
 <tr><td><input type='file' name='file' accept='.bin' id='file'></td></tr>
-<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=32 id='dkey'></td></tr>
+<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=64 id='dkey'></td></tr>
 <tr><td><label id='msg'></label></td></tr>
 </table>
 <div data-role='controlgroup' data-type='horizontal'>    
