@@ -91,7 +91,11 @@ var comm = 'cc?click=1&dkey='+encodeURIComponent($('#dkey').val());
 });
 $(document).ready(function() { show(); si=setInterval('show()', 5000); });
 function show() {
-	$.getJSON('jc', function(jd) {
+	$.ajax({
+	url:'jc',
+	dataType:'JSON',
+	timeout:5000,
+	success:function(jd){
 		$('#fwv').text((jd.fwv/100>>0)+'.'+(jd.fwv/10%10>>0)+'.'+(jd.fwv%10>>0));
 		$('#lbl_dist').text(jd.dist +' (cm)').css('color', jd.dist==450?'red':'black');
 		$('#lbl_status').text(jd.door?'OPEN':'CLOSED').css('color',jd.door?'red':'green'); 
@@ -111,7 +115,7 @@ function show() {
 		}
 		if(typeof(jd.sn2)!='undefined') {$('#tbl_sn2').show(); $('#lbl_sn2').text(jd.sn2?'High':'Low');}
 		else {$('#tbl_sn2').hide();}
-		$('#lbl_beat').text(jd.rcnt);
+		$('#lbl_beat').text(jd.rcnt).css('color','black');
 		$('#lbl_rssi').text((jd.rssi>-71?'Good':(jd.rssi>-81?'Weak':'Poor')) +' ('+ jd.rssi +' dBm)');
 		if(jd.cld==0) $('#lbl_cld').text('None');
 		else {$('#lbl_cld').text(['None','Blynk','OTC'][jd.cld]+' '+['(disconnected)','(connected)'][jd.clds]);}
@@ -120,6 +124,11 @@ function show() {
 		$('#btn_click').html(jd.door?'Close Door':'Open Door').button('refresh');
 		if(typeof(jd.temp)!='undefined') {$('#tbl_th').show(); $('#lbl_th').text(jd.temp.toFixed(1)+String.fromCharCode(176)+'C / '+(jd.temp*1.8+32).toFixed(1)+String.fromCharCode(176)+'F (H:'+jd.humid.toFixed(1)+'%)');}
 		else {$('#tbl_th').hide();}
+	},
+	error:function(){
+		$('#lbl_beat').text('(offline)').css('color','red');
+		$('#lbl_cld').text('disconnected');
+	}
 	});
 }
 </script>
