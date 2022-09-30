@@ -265,7 +265,7 @@ void sta_controller_fill_json(String& json, bool fullversion=true) {
 		if(cld>CLD_NONE) {
 			json += F(",\"clds\":");
 			if(cld==CLD_BLYNK) json += (Blynk.connected()?1:0);
-			else if(cld==CLD_OTC) json += (otf->getCloudStatus()?1:0);
+			else if(cld==CLD_OTC) json += (otf->getCloudStatus());
 			else json += "0";
 		}
 	}

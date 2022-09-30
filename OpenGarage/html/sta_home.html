@@ -99,7 +99,6 @@ function show() {
 		$('#fwv').text((jd.fwv/100>>0)+'.'+(jd.fwv/10%10>>0)+'.'+(jd.fwv%10>>0));
 		$('#lbl_dist').text(jd.dist +' (cm)').css('color', jd.dist==450?'red':'black');
 		$('#lbl_status').text(jd.door?'OPEN':'CLOSED').css('color',jd.door?'red':'green'); 
-		//Hide or Show vehicle info
 		if (jd.vehicle >=2){
 			$('#lbl_vstatus1').hide();
 			$('#lbl_vstatus').text('');
@@ -107,8 +106,7 @@ function show() {
 			$('#lbl_vstatus1').show()
 			$('#lbl_vstatus').text(jd.vehicle & !jd.door?'Present':(!jd.vehicle & !jd.door?'Absent':''));
 		}
-		//Use correct graphics
-		if (jd.vehicle>=3){ //3 is disabled
+		if (jd.vehicle>=3){
 			$('#pic').attr('src', (jd.door?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/DoorOpen.png':'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/DoorShut.png'));
 		}else{
 			$('#pic').attr('src', jd.door?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/Open.png':(jd.vehicle?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/ClosedPresent.png':'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/ClosedAbsent.png'));
@@ -118,8 +116,8 @@ function show() {
 		$('#lbl_beat').text(jd.rcnt).css('color','black');
 		$('#lbl_rssi').text((jd.rssi>-71?'Good':(jd.rssi>-81?'Weak':'Poor')) +' ('+ jd.rssi +' dBm)');
 		if(jd.cld==0) $('#lbl_cld').text('None');
-		else {$('#lbl_cld').text(['None','Blynk','OTC'][jd.cld]+' '+['(disconnected)','(connected)'][jd.clds]);}
-		//$('#lbl_otcs').text(["Not enabled","Unable to connect","Disconnected","Connected"][jd.otcs]+" since "+new Date(jd.otcc*1000));
+		else if(jd.cld==1) {$('#lbl_cld').text('Blynk '+['(disconnected)','(connected)'][jd.clds]);}
+		else {$('#lbl_cld').text('OTC '+['(not enabled)','(connecting...)','(disconnected)','(connected)'][jd.clds]);}
 		$('#head_name').text(jd.name);
 		$('#btn_click').html(jd.door?'Close Door':'Open Door').button('refresh');
 		if(typeof(jd.temp)!='undefined') {$('#tbl_th').show(); $('#lbl_th').text(jd.temp.toFixed(1)+String.fromCharCode(176)+'C / '+(jd.temp*1.8+32).toFixed(1)+String.fromCharCode(176)+'F (H:'+jd.humid.toFixed(1)+'%)');}
