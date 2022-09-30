@@ -859,7 +859,8 @@ byte check_door_status_hist() {
 }
 
 void on_sta_update(const OTF::Request &req, OTF::Response &res) {
-	otf_send_html_P(res, (const __FlashStringHelper *) sta_update_html);
+	if(req.isCloudRequest()) otf_send_result(res, HTML_NOT_PERMITTED, "fw update");
+	else otf_send_html_P(res, (const __FlashStringHelper *) sta_update_html);
 }
 
 void on_ap_update(const OTF::Request &req, OTF::Response &res) {
