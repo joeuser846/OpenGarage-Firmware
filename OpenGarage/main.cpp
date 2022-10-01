@@ -308,6 +308,8 @@ void on_sta_debug(const OTF::Request &req, OTF::Response &res) {
 	json += (F(__DATE__));
 	json += F("\",\"Freeheap\":");
 	json += (uint16_t)ESP.getFreeHeap();
+	json += F("\",\"flash_size\":");
+	json += (uint32_t)ESP.getFlashChipRealSize();
 	json += F("}");
 	otf_send_json(res, json);
 }
