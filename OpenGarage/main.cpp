@@ -75,7 +75,7 @@ static HTTPClient http;
 void do_setup();
 
 void otf_send_html_P(OTF::Response &res, const __FlashStringHelper *content) {
-	res.writeStatus(200, "OK");
+	res.writeStatus(200, F("OK"));
 	res.writeHeader(F("Content-Type"), F("text/html"));
 	res.writeHeader(F("Access-Control-Allow-Origin"), F("*")); // from esp8266 2.4 this has to be sent explicitly
 	res.writeHeader(F("Content-Length"), strlen_P((char *) content));
@@ -86,7 +86,7 @@ void otf_send_html_P(OTF::Response &res, const __FlashStringHelper *content) {
 }
 
 void otf_send_json(OTF::Response &res, String json) {
-	res.writeStatus(200, "OK");
+	res.writeStatus(200, F("OK"));
 	res.writeHeader(F("Content-Type"), F("application/json"));
 	res.writeHeader(F("Access-Control-Allow-Origin"), F("*")); // from esp8266 2.4 this has to be sent explicitly
 	res.writeHeader(F("Content-Length"), json.length());
@@ -308,7 +308,7 @@ void on_sta_debug(const OTF::Request &req, OTF::Response &res) {
 	json += (F(__DATE__));
 	json += F("\",\"Freeheap\":");
 	json += (uint16_t)ESP.getFreeHeap();
-	json += F("\",\"flash_size\":");
+	json += F(",\"flash_size\":");
 	json += (uint32_t)ESP.getFlashChipRealSize();
 	json += F("}");
 	otf_send_json(res, json);
