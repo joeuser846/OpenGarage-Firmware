@@ -759,7 +759,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
 void do_setup()
 {
-	DEBUG_BEGIN(115200);
+	Serial.begin(115200);
 	if(otf) {
 		delete otf;
 		otf = NULL;
@@ -946,8 +946,9 @@ void on_ap_upload() {
 void check_status_ap() {
 		static ulong cs_timeout = 0;
 		if(millis() > cs_timeout) {
-			DEBUG_PRINTLN(og.read_distance());
-			DEBUG_PRINTLN(OG_FWV);
+			Serial.print(og.read_distance());
+			Serial.print("/");
+			Serial.println(OG_FWV);
 			cs_timeout = millis() + 2000;
 		}
 }

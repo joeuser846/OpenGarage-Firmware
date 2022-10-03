@@ -202,7 +202,6 @@ typedef enum {
 
 /** Serial debug functions */
 //#define SERIAL_DEBUG
-#define DEBUG_BEGIN(x) { Serial.begin(x); }
 
 #if defined(SERIAL_DEBUG)
 	#define DEBUG_PRINT(x)   Serial.print(x)
