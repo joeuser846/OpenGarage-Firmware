@@ -298,6 +298,8 @@ void on_sta_debug(const OTF::Request &req, OTF::Response &res) {
 	json += get_mac();
 	json += F("\",\"mqtt_topic\":\"");
 	json += mqtt_topic;
+	json += F("\",\"devip\":\"");
+	json += WiFi.localIP().toString();
 	json += F("\",\"cid\":");
 	json += ESP.getChipId();
 	json += F(",\"rssi\":");
