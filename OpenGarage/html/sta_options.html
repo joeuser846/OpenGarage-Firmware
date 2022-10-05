@@ -17,7 +17,6 @@
 <option value=0>Ceiling Mount</option>
 <option value=1>Side Mount</option>
 </select></td></tr>
-
 <tr><td><b>Door Thres. (cm): </b></td><td><input type='text' size=3 maxlength=4 id='dth' data-mini='true' value=0></td></tr>
 <tr><td><b>Car Thres. (cm):</b><br><small>set to 0 to disable</small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
 <tr><td><b>Status Check (s):</b><br><small>check status every</small></td><td><input type='text' size=3 maxlength=3 id='riv' data-mini='true' value=0></td></tr>
@@ -62,19 +61,30 @@
 </div>
 <div id='div_cloud' style='display:none;'>
 <table cellpadding=1>
-<tr><td><b>Blynk Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true' value='' placeholder='(optional)'></td></tr>
-<tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value=''></td></tr>
-<tr><td><b>Blynk Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true' value=0></td></tr>
-<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='' placeholder='(optional)'></td></tr>
-<tr><td><b>MQTT Server:</b><br><small>set blank to disable</small></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true' value='' placeholder='(optional)' onInput='update_mqtt()'></td></tr>
-<tr><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true' value=0 disabled></td></tr>
-<tr><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=32 id='mqur' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
-<tr><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' value='' placeholder='(unchanged if left blank)' disabled></td></tr>
-<tr><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
+<tr><td colspan=2><input type='checkbox' id='cld' data-mini='true' onclick='update_cld()'><label for='cld'>Enable Cloud Connection</label></td></tr>
+<tr class='cld'><td><b>Cloud Type:</b></td><td>
+<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
+<input type='radio' name='rd_ct' id='blynk' onclick='update_ct()' checked><label for='blynk'>Blynk</label>
+<input type='radio' name='rd_ct' id='otc' onclick='update_ct()'><label for='otc'>OTC</label>
+</fieldset>
+</td>
+<tr class='cld'><td><b>Cloud Token:</b></td><td><input type='text' size=20 maxlength=64 id='auth' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Server:</b></td><td><input type='text' size=20 maxlength=64 id='bdmn' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true'></td></tr>
+<tr class='cld'><td colspan=2><hr></td></tr>
+<tr><td colspan=2><input type='checkbox' id='mqen' data-mini='true' onclick='update_mqtt()'><label for='mqen'>Enable MQTT</label></td></tr>
+<tr class='mqt'><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=64 id='mqtt' data-mini='true'></td></tr>
+<tr class='mqt'><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true'></td></tr>
+<tr class='mqt'><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=64 id='mqur' data-mini='true' placeholder='(optional)'></td></tr>
+<tr class='mqt'><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' placeholder='(unchanged if left blank)'></td></tr>
+<tr class='mqt'><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=64 id='mqtp' data-mini='true' placeholder='(optional)'></td></tr>
+<tr class='mqt'><td colspan=2><hr></td></tr>
+<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' placeholder='(optional)'></td></tr>
 </table>
 <table>
   <tr><td colspan=4><b>Choose Notifications:</b></td></tr>
   <tr><td><input type='checkbox' id='noto0' data-mini='true'><label for='noto0'>Door<br> Open</label></td><td><input type='checkbox' id='noto1' data-mini='true' ><label for='noto1'>Door<br> Close</label></td><td><input type='checkbox' id='noto2' data-mini='true' disabled><label for='noto2'>Vehicle<br> Leave</label></td><td><input type='checkbox' id='noto3' data-mini='true' disabled ><label for='noto3'>Vehicle<br> Arrive</label></td></tr>
+ <tr><td colspan=4><hr></td></tr>
  <tr><td colspan=4><b>Automation:</b></td></tr>
  <tr><td colspan=4></td></tr><tr><td colspan=4></td></tr>
   <tr><td colspan=4>If open for longer than:</td></tr>
@@ -101,47 +111,51 @@
 </fieldset>
 </td></tr>
 <tr><td><b>HTTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='htp' value=0 data-mini='true'></td></tr>
-<tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' value='' data-mini='true' placeholder='(optional)'></td></tr>
-<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=32 id='ntp1' value='' data-mini='true' placeholder='(optional)'></td></tr>
-<tr><td colspan=2><input type='checkbox' id='usi' data-mini='true'><label for='usi'>Use Static IP</label></td></tr>
-<tr><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true' disabled></td></tr>
-<tr><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true' disabled></td></tr>
-<tr><td><b>Subnet:</b></td><td><input type='text' size=15 maxlength=15 id='subn' data-mini='true' disabled></td></tr>
-<tr><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=15 id='dns1' data-mini='true' disabled></td></tr>
-<tr><td colspan=2><input type='checkbox' id='cb_key' data-mini='true'><label for='cb_key'>Change Device Key</label></td></tr>
-<tr><td><b>New Key:</b></td><td><input type='password' size=24 maxlength=32 id='nkey' data-mini='true' disabled></td></tr>
-<tr><td><b>Confirm:</b></td><td><input type='password' size=24 maxlength=32 id='ckey' data-mini='true' disabled></td></tr>      
+<tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' data-mini='true' placeholder='(optional)'></td></tr>
+<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=64 id='ntp1' data-mini='true' placeholder='(optional)'></td></tr>
+<tr><td colspan=2><input type='checkbox' id='usi' data-mini='true' onclick='update_usi()'><label for='usi'>Use Static IP</label></td></tr>
+<tr class='si'><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true'></td></tr>
+<tr class='si'><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true'></td></tr>
+<tr class='si'><td><b>Subnet:</b></td><td><input type='text' size=15 maxlength=15 id='subn' data-mini='true'></td></tr>
+<tr class='si'><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=64 id='dns1' data-mini='true'></td></tr>
+<tr><td colspan=2><input type='checkbox' id='cb_key' data-mini='true' onclick='update_ckey()'><label for='cb_key'>Change Device Key</label></td></tr>
+<tr class='ckey'><td><b>New Key:</b></td><td><input type='password' size=16 maxlength=64 id='nkey' data-mini='true'></td></tr>
+<tr class='ckey'><td><b>Confirm:</b></td><td><input type='password' size=16 maxlength=64 id='ckey' data-mini='true'></td></tr>      
 </table>
 </div>
 <br />
 <table cellpadding=2>
-<tr><td><b>Device Key:</b></td><td><input type='password' size=24 maxlength=32 id='dkey' data-mini='true'></td></tr>
+<tr><td><b>Device Key:</b></td><td><input type='password' size=24 maxlength=64 id='dkey' data-mini='true'></td></tr>
 <tr><td colspan=2><p id='msg'></p></td></tr>
 </table>
 <div data-role='controlgroup' data-type='horizontal'>
 <a href='#' data-role='button' data-inline='true' data-theme='a' id='btn_back'>Back</a>
 <a href='#' data-role='button' data-inline='true' data-theme='b' id='btn_submit'>Submit</a> 
 </div>
-<table>
-</table>
 </div>
 <div data-role='footer' data-theme='c'>
-<p>&nbsp; OpenGarage Firmware v<label id='fwv'>-</label><div data-role='controlgroup' data-type='horizontal'><a href='update' target='_top' data-role='button' data-inline=true data-mini=true>Firmware Update</a><a href='https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf' target='_blank' data-role='button' data-inline=true data-mini=true>User Manual</a></p></div>
+<p>&nbsp; OpenGarage Firmware v<label id='fwv'>-</label><div data-role='controlgroup' data-type='horizontal'><a href='update' target='_top' data-role='button' data-inline=true data-mini=true>Firmware Update</a><a href='https://github.com/OpenGarage/OpenGarage-Firmware/tree/master/docs' target='_blank' data-role='button' data-inline=true data-mini=true>User Manual</a></p></div>
 </div>
 </div>
 <script>
+let prev_ct=1;
 function clear_msg() {$('#msg').text('');}
 function update_sno(){
 if(parseInt($('#sn2 option:selected').val())>0){
 $('#sno').selectmenu('enable'); 
 }else{$('#sno').selectmenu('disable');}
 }
-function update_mqtt(){
-if($('#mqtt').val().length>0){
-$('#mqpt').textinput('enable');$('#mqur').textinput('enable');$('#mqpw').textinput('enable');$('#mqtp').textinput('enable');
-}else{
-$('#mqpt').textinput('disable');$('#mqur').textinput('disable');$('#mqpw').textinput('disable');$('#mqtp').textinput('disable');
+function update_cld(){
+if(eval_cb('#cld')) $('.cld').show();
+else $('.cld').hide();
 }
+function update_ct(){
+if(eval_cb('#blynk')&&prev_ct!=1){$('#bdmn').val('blynk.openthings.io');$('#bprt').val(8080);prev_ct=1;}
+else if(eval_cb('#otc')&&prev_ct!=2){$('#bdmn').val('ws.cloud.openthings.io');$('#bprt').val(80);prev_ct=2;}
+}
+function update_mqtt(){
+if(eval_cb('#mqen')) $('.mqt').show();
+else $('.mqt').hide();
 }
 function update_sfi(){
 if(eval_cb('#sf_con')) $('#tbl_cmr').show();
@@ -150,16 +164,14 @@ else $('#tbl_cmr').hide();
 function show_msg(s) {$('#msg').text(s).css('color','red'); setTimeout(clear_msg, 2000);}
 function goback() {history.back();}
 function eval_cb(n)  {return $(n).is(':checked')?1:0;}
-$('#cb_key').click(function(e){
-$('#nkey').textinput($(this).is(':checked')?'enable':'disable');
-$('#ckey').textinput($(this).is(':checked')?'enable':'disable');
-});
-$('#usi').click(function(e){
-$('#dvip').textinput($(this).is(':checked')?'enable':'disable');
-$('#gwip').textinput($(this).is(':checked')?'enable':'disable');
-$('#subn').textinput($(this).is(':checked')?'enable':'disable');
-$('#dns1').textinput($(this).is(':checked')?'enable':'disable');
-});
+function update_ckey(){
+if(eval_cb('#cb_key')) $('.ckey').show();
+else $('.ckey').hide();
+}
+function update_usi(){
+if(eval_cb('#usi')) $('.si').show();
+else $('.si').hide();
+}
 function toggle_opt() {
 $('#div_basic').hide();
 $('#div_cloud').hide();
@@ -176,6 +188,7 @@ function bc(n,e=0) {comm+='&'+n+'=';
 if(e) comm+=encodeURIComponent($('#'+n).val());
 else comm+=$('#'+n).val();
 }
+function cbt(n,v=true) {$('#'+n).attr('checked',v).checkboxradio('refresh');}
 $('#btn_submit').click(function(e){
 e.preventDefault();
 if(confirm('Submit changes?')) {
@@ -195,9 +208,13 @@ comm+='&atob='+atob;
 var noto=0;
 for(var i=1;i>=0;i--) { noto=(noto<<1)+eval_cb('#noto'+i); }
 comm+='&noto='+noto;
+if(eval_cb('#cld')) {comm+='&cld='+(eval_cb('#blynk')?1:2);
+if($('#auth').val().length<32) {show_msg('Cloud token is too short!');return;}}
+else comm+='&cld=0';
 bc('name',1);bc('auth',1);bc('bdmn',1);bc('iftt',1);
 bc('mqtt',1);bc('mqur',1);bc('mqtp',1);bc('mqpt');
 if($('#mqpw').val().length>0) bc('mqpw',1);
+comm+='&mqen='+(eval_cb('#mqen')?1:0);
 bc('bprt');bc('ntp1',1);bc('host',1);
 if($('#cb_key').is(':checked')) {
 if(!$('#nkey').val()) {
@@ -223,10 +240,10 @@ setTimeout(goback, 4000);
 }
 });
 $(document).ready(function() {
-$.getJSON('jo', function(jd) {
+$.getJSON('jo', function(jd){
 $('#fwv').text((jd.fwv/100>>0)+'.'+(jd.fwv/10%10>>0)+'.'+(jd.fwv%10>>0));
 $('#alm').val(jd.alm).selectmenu('refresh');
-if(jd.aoo>0) $('#aoo').attr('checked',true).checkboxradio('refresh');
+if(jd.aoo>0) cbt('aoo');
 $('#lsz').val(jd.lsz).selectmenu('refresh');
 $('#tsn').val(jd.tsn).selectmenu('refresh');
 $('#sn1').val(jd.sn1).selectmenu('refresh');
@@ -239,22 +256,27 @@ $('#riv').val(jd.riv);
 $('#htp').val(jd.htp);
 $('#cdt').val(jd.cdt);
 $('#dri').val(jd.dri);
-if(jd.sto) $('#to_cap').attr('checked',true).checkboxradio('refresh');
-else $('#to_ignore').attr('checked',true).checkboxradio('refresh');
-if(jd.sfi) $('#sf_con').attr('checked',true).checkboxradio('refresh');
-else $('#sf_med').attr('checked',true).checkboxradio('refresh');
+if(jd.sto) cbt('to_cap');
+else cbt('to_ignore');
+if(jd.sfi) cbt('sf_con');
+else cbt('sf_med');
 if(jd.cmr) $('#cmr').val(jd.cmr);
 update_sfi();
 $('#ati').val(jd.ati);
 $('#atib').val(jd.atib);
-for(var i=0;i<=1;i++) {if(jd.ato&(1<<i)) $('#ato'+i).attr('checked',true).checkboxradio('refresh');}
-for(var i=0;i<=1;i++) {if(jd.atob&(1<<i)) $('#atob'+i).attr('checked',true).checkboxradio('refresh');}
-for(var i=0;i<=1;i++) {if(jd.noto&(1<<i)) $('#noto'+i).attr('checked',true).checkboxradio('refresh');}
+for(var i=0;i<=1;i++) {if(jd.ato&(1<<i)) cbt('ato'+i);}
+for(var i=0;i<=1;i++) {if(jd.atob&(1<<i)) cbt('atob'+i);}
+for(var i=0;i<=1;i++) {if(jd.noto&(1<<i)) cbt('noto'+i);}
 $('#name').val(jd.name);
+if(jd.cld>0) cbt('cld');
+if(jd.cld==1) {cbt('blynk');cbt('otc',false);prev_ct=1;}
+else if(jd.cld==2) {cbt('otc');cbt('blynk',false);prev_ct=2;}
+update_cld();
 $('#auth').val(jd.auth);
 $('#bdmn').val(jd.bdmn);
 $('#bprt').val(jd.bprt);
 if(jd.iftt) $('#iftt').val(jd.iftt);
+if(jd.mqen>0) cbt('mqen');
 $('#mqtt').val(jd.mqtt);
 if(jd.mqur) $('#mqur').val(jd.mqur);
 if(jd.mqtp) $('#mqtp').val(jd.mqtp);
@@ -264,14 +286,12 @@ $('#dvip').val(jd.dvip);
 $('#gwip').val(jd.gwip);
 $('#subn').val(jd.subn);
 $('#dns1').val(jd.dns1);
-if(jd.usi>0) $('#usi').attr('checked',true).checkboxradio('refresh');
-$('#dvip').textinput(jd.usi>0?'enable':'disable');
-$('#gwip').textinput(jd.usi>0?'enable':'disable');
-$('#subn').textinput(jd.usi>0?'enable':'disable');
-$('#dns1').textinput(jd.usi>0?'enable':'disable');  
+if(jd.usi>0) cbt('usi');
+update_usi();
 if(jd.ntp1) $('#ntp1').val(jd.ntp1);
 if(jd.host) $('#host').val(jd.host);
 });
 });
+update_ckey();
 </script>
 </body>

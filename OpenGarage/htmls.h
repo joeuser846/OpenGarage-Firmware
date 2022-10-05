@@ -3,70 +3,108 @@ const char ap_home_html[] PROGMEM = R"(<head>
 <meta name='viewport' content='width=device-width, initial-scale=1'>
 </head>
 <body>
-<style> table, th, td {	border: 0px solid black;  border-collapse: collapse;}
-table#rd th { border: 1px solid black;}
-table#rd td {	border: 1px solid black; border-collapse: collapse;}</style>
-<caption><b>OpenGarage WiFi Config</caption><br><br>
-<table cellspacing=4 id='rd'>
+<style>
+table, th, td {border: 0px solid black; border-collapse: collapse;}
+table#rd th {border: 1px solid black;}
+table#rd td {border: 1px solid black; border-collapse: collapse;}
+th, td {padding: 2px;}
+input[type=text] {font-size: 12pt; height:28px;}
+input[type=password] {font-size: 12pt; height:28px;}
+</style>
+<caption><b>OpenGarage WiFi Config</b></caption><br><br>
+<table id='rd'>
 <tr><td>SSID</td><td>Strength</td><td>Power Level</td></tr>
 <tr><td>(Scanning...)</td></tr>
+</table><br><br>
+<div id='div_input'>
+<table>
+<tr><td><b>WiFi SSID</b>:</td><td><input type='text' id='ssid'></td></tr>
+<tr><td><b>WiFi Password</b>:</td><td><input type='password' id='pass'></td></tr>
 </table>
-<br><br>
-<table cellspacing=16>
-<tr><td><input type='text' name='ssid' id='ssid' style='font-size:14pt;height:28px;'></td><td>(Your WiFi SSID)</td></tr>
-<tr><td><input type='password' name='pass' id='pass' style='font-size:14pt;height:28px;'></td><td>(Your WiFi Password)</td></tr>
-<tr><td><input type='text' name='auth' id='auth' style='font-size:14pt;height:28px;'></td><td><label id='lbl_auth'>(Blynk Token, Optional)</label></td></tr>
-<tr><td colspan=2><p id='msg'></p></td></tr>
-<tr><td><button type='button' id='butt' onclick='sf();' style='height:36px;width:180px'>Submit</button></td><td></td></tr>
+<br>
+<b>Enable Cloud Connection</b>?<br>
+<table>
+<tr><td><input type='radio' id='none' name='token' onclick='toggle_cld()' checked><label for='none'>No. I will configure this later.</label></td></tr>
+<tr><td><input type='radio' id='blynk' name='token' onclick='toggle_cld()'><label for='blynk'>Use Blynk Token.</label></td></tr>
+<tr><td><input type='radio' id='otc' name='token' onclick='toggle_cld()'><label for='otc'>Use OpenThings Cloud (OTC) Token.</label></td></tr>
 </table>
+<table id='tb_cld' hidden>
+<tr><td></td><td>Token:</td><td><input type='text' id='auth'></td></tr>
+<tr><td></td><td>Server:</td><td><input type='text' id='bdmn'></td></tr>
+<tr><td></td><td>Port:</td><td><input type='text' id='bprt'></td></tr>
+</table>
+</div>
+<p id='msg'></p>
+<button type='button' id='butt' onclick='sf()' style='height:36px;width:180px'>Submit</button>
 <script>
-function id(s) {return document.getElementById(s);}
-function sel(i) {id('ssid').value=id('rd'+i).value;}
+function id(s){return document.getElementById(s);}
+function sel(i){id('ssid').value=id('rd'+i).value;}
+function eval_cb(n){return id(n).checked;}
+function dis_config(x){let a = document.querySelectorAll('#div_input input');for(let e of a){e.disabled = x;}}
+function show_msg(s,c){id('msg').innerHTML='<font color='+c+'>'+s+'</font>';}
 var tci;
-function tryConnect() {
+function toggle_cld(){
+id('tb_cld').hidden=true;
+if(eval_cb('blynk')) {id('tb_cld').hidden=false;id('bdmn').value='blynk.openthings.io';id('bprt').value='8080';}
+if(eval_cb('otc')) {id('tb_cld').hidden=false;id('bdmn').value='ws.cloud.openthings.io';id('bprt').value='80';}
+}
+function tryConnect(){
 var xhr=new XMLHttpRequest();
 xhr.onreadystatechange=function() {
 if(xhr.readyState==4 && xhr.status==200) {
 var jd=JSON.parse(xhr.responseText);
 if(jd.ip==0) return;
 var ip=''+(jd.ip%256)+'.'+((jd.ip/256>>0)%256)+'.'+(((jd.ip/256>>0)/256>>0)%256)+'.'+(((jd.ip/256>>0)/256>>0)/256>>0);
-id('msg').innerHTML='<b><font color=green>Connected! Device IP: '+ip+'</font></b><br>Device is rebooting. Switch back to<br>the above WiFi network, and then<br>click the button below to redirect.'
-id('butt').innerHTML='Go to '+ip;id('butt').disabled=false;
+show_msg('Connected! Device IP: '+ip+'</font></b><br>Device is rebooting. Switch back to<br>the above WiFi network, and then<br>click the button below to redirect.', 'green');
+id('butt').innerHTML='Go to '+ip;
+id('butt').disabled=false;
 id('butt').onclick=function rd(){window.open('http://'+ip);}
 clearInterval(tci);
 }
 }
 xhr.open('GET', 'jt', true); xhr.send();
 }
-function sf() {
-id('msg').innerHTML='';
+function sf(){
+show_msg('','black');
+if(!id('ssid').value) {show_msg('WiFi SSID cannot be empty!','red');return;}
 var xhr=new XMLHttpRequest();
 xhr.onreadystatechange=function() {
 if(xhr.readyState==4 && xhr.status==200) {
 var jd=JSON.parse(xhr.responseText);
-if(jd.result==1) { id('butt').innerHTML='Connecting...'; id('msg').innerHTML='<font color=gray>Connecting, please wait...</font>'; tci=setInterval(tryConnect, 2000); return; }
-id('msg').innerHTML='<b><font color=red>Error code: '+jd.result+', item: '+jd.item+'</font></b>'; id('butt').innerHTML='Submit'; id('butt').disabled=false;id('ssid').disabled=false;id('pass').disabled=false;id('auth').disabled=false;
+if(jd.result==1) { id('butt').innerHTML='Connecting...'; show_msg('Connecting, please wait...','gray'); tci=setInterval(tryConnect, 2000); return;}
+show_msg('Error code: '+jd.result+', item: '+jd.item,'red');
+id('butt').innerHTML='Submit';
+dis_config(false);
 }
 };
-var comm='cc?ssid='+encodeURIComponent(id('ssid').value)+'&pass='+encodeURIComponent(id('pass').value)+'&auth='+id('auth').value;
-xhr.open('GET', comm, true); xhr.send();
-id('butt').disabled=true;id('ssid').disabled=true;id('pass').disabled=true;id('auth').disabled=true;
+var comm='cc?ssid='+encodeURIComponent(id('ssid').value)+'&pass='+encodeURIComponent(id('pass').value);
+if(eval_cb('otc')||eval_cb('blynk')){
+if(id('auth').value.length<32) {show_msg('Cloud token is too short!','red');return;}
+comm+='&cld='+(eval_cb('blynk')?'blynk':'otc');
+comm+='&auth='+encodeURIComponent(id('auth').value);
+comm+='&bdmn='+id('bdmn').value;
+comm+='&bprt='+id('bprt').value;
 }
-function loadSSIDs() {
+xhr.open('GET', comm, true);
+xhr.send();
+id('butt').disabled=true;
+dis_config(true);
+}
+function loadSSIDs(){
 var xhr=new XMLHttpRequest();
 xhr.onreadystatechange=function() {
 if(xhr.readyState==4 && xhr.status==200) {
 id('rd').deleteRow(1);
 var i, jd=JSON.parse(xhr.responseText);
-//TODO Sort and remove dups
 for(i=0;i<jd.ssids.length;i++) {
-var signalstrength= jd.rssis[i]>-71?'Ok':(jd.rssis[i]>-81?'Weak':'Poor');
+var signalstrength=jd.rssis[i]>-71?'Ok':(jd.rssis[i]>-81?'Weak':'Poor');
 var row=id('rd').insertRow(-1);
-row.innerHTML ="<tr><td><input name='ssids' id='rd"+i+"' onclick='sel(" + i + ")' type='radio' value='"+jd.ssids[i]+"'>" + jd.ssids[i] + "</td>"  + "<td align='center'>"+signalstrength+"</td>" + "<td align='center'>("+jd.rssis[i] +" dbm)</td>" + "</tr>";
+row.innerHTML ="<tr><td><input name='ssids' id='rd"+i+"' onclick='sel("+i+")' type='radio' value='"+jd.ssids[i]+"'>"+jd.ssids[i]+"</td>"+"<td align='center'>"+signalstrength+"</td>"+"<td align='center'>("+jd.rssis[i]+" dbm)</td>"+"</tr>";
 }
 };
 }
-xhr.open('GET','js',true); xhr.send();
+xhr.open('GET','js',true);
+xhr.send();
 }
 setTimeout(loadSSIDs, 1000);
 </script>
@@ -83,7 +121,7 @@ const char ap_update_html[] PROGMEM = R"(<head>
 <form method='POST' action='/update' id='fm' enctype='multipart/form-data'>
 <table cellspacing=4>
 <tr><td><input type='file' name='file' accept='.bin' id='file'></td></tr>
-<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=32 id='dkey'></td></tr>
+<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=64 id='dkey'></td></tr>
 <tr><td><label id='msg'></label></td></tr>
 </table>
 <button id='btn_submit' style='height:48px;'>Submit</a>
@@ -122,7 +160,7 @@ show_msg('Update failed.',0,'red');
 }
 }
 };
-xhr.open('POST', 'update', true);
+xhr.open('POST', '//' + window.location.hostname + ':8080' + window.location.pathname, true);
 xhr.send(fd);
 });
 </script>
@@ -133,16 +171,17 @@ const char sta_home_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta nam
 <style> table, th, td {border: 0px solid black;padding: 6px; border-collapse: collapse; }</style>
 <div data-role='page' id='page_home'><div data-role='header'><h3 id='head_name'>OG</h3></div>
 <div data-role='content'><div data-role='fieldcontain'>
-<table><tr><td><b>Door State:<br></td><td><label id='lbl_status'>-</label></td>
+<table><tr><td><b>Door:<br></td><td><label id='lbl_status'>-</label></td>
 <td rowspan='2'><img id='pic' src='' style='width:112px;height:64px;'></td>
-</tr><tr><td><b><label id='lbl_vstatus1'>Vehicle State:</label></b></td>
+</tr><tr><td><b><label id='lbl_vstatus1'>Vehicle:</label></b></td>
 <td><label id='lbl_vstatus'>-</label></td></tr>
 <tr><td><b>Distance:</b></td><td><label id='lbl_dist'>-</label></td><td></td></tr>
 <tr id='tbl_sn2' style='display:none;'><td><b>Switch State:</b></td><td><label id='lbl_sn2'>-</label></td><td></td></tr>
 <tr><td><b>Read Count:</b></td><td><label id='lbl_beat'>-</label></td><td></td></tr>
 <tr><td><b>WiFi Signal:</b></td><td colspan='2'><label id='lbl_rssi'>-</label></td></tr>
+<tr><td><b>Cloud:</b></td><td colspan='2'><label id='lbl_cld'>-</label></td></tr>
 <tr id='tbl_th' style='display:none;'><td><b>T/H sensor:</b></td><td colspan='2'><label id='lbl_th'>-</label></td></tr>
-<tr><td><b>Device Key:</b></td><td colspan='2' ><input type='password' size=20 maxlength=32 name='dkey' id='dkey'></td></tr>
+<tr><td><b>Device Key:</b></td><td colspan='2' ><input type='password' size=20 maxlength=64 name='dkey' id='dkey'></td></tr>
 <tr><td colspan=3><label id='msg'></label></td></tr>
 </table><br />
 <div data-role='controlgroup' data-type='horizontal'>
@@ -159,7 +198,7 @@ const char sta_home_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta nam
 </div>
 </div>
 <div data-role='footer' data-theme='c'>
-<p>&nbsp; OpenGarage Firmware v<label id='fwv'>-</label><div data-role='controlgroup' data-type='horizontal'><a href='update' target='_top' data-role='button' data-inline=true data-mini=true>Firmware Update</a><a href='https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf' target='_blank' data-role='button' data-inline=true data-mini=true>User Manual</a></p></div>
+<p>&nbsp; OpenGarage Firmware v<label id='fwv'>-</label><div data-role='controlgroup' data-type='horizontal'><a href='update' target='_top' data-role='button' data-inline=true data-mini=true>Firmware Update</a><a href='https://github.com/OpenGarage/OpenGarage-Firmware/tree/master/docs/fw1.2.0' target='_blank' data-role='button' data-inline=true data-mini=true>User Manual</a></p></div>
 </div>
 </div>
 <script>
@@ -220,11 +259,14 @@ $('#msg').text('Request Failed: ' + err).css('color','red');
 });
 $(document).ready(function() { show(); si=setInterval('show()', 5000); });
 function show() {
-$.getJSON('jc', function(jd) {
+$.ajax({
+url:'jc',
+dataType:'JSON',
+timeout:5000,
+success:function(jd){
 $('#fwv').text((jd.fwv/100>>0)+'.'+(jd.fwv/10%10>>0)+'.'+(jd.fwv%10>>0));
 $('#lbl_dist').text(jd.dist +' (cm)').css('color', jd.dist==450?'red':'black');
 $('#lbl_status').text(jd.door?'OPEN':'CLOSED').css('color',jd.door?'red':'green'); 
-//Hide or Show vehicle info
 if (jd.vehicle >=2){
 $('#lbl_vstatus1').hide();
 $('#lbl_vstatus').text('');
@@ -232,20 +274,27 @@ $('#lbl_vstatus').text('');
 $('#lbl_vstatus1').show()
 $('#lbl_vstatus').text(jd.vehicle & !jd.door?'Present':(!jd.vehicle & !jd.door?'Absent':''));
 }
-//Use correct graphics
-if (jd.vehicle>=3){ //3 is disabled
+if (jd.vehicle>=3){
 $('#pic').attr('src', (jd.door?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/DoorOpen.png':'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/DoorShut.png'));
 }else{
 $('#pic').attr('src', jd.door?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/Open.png':(jd.vehicle?'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/ClosedPresent.png':'https://github.com/OpenGarage/OpenGarage-Firmware/raw/master/icons/ClosedAbsent.png'));
 }
 if(typeof(jd.sn2)!='undefined') {$('#tbl_sn2').show(); $('#lbl_sn2').text(jd.sn2?'High':'Low');}
 else {$('#tbl_sn2').hide();}
-$('#lbl_beat').text(jd.rcnt);
+$('#lbl_beat').text(jd.rcnt).css('color','black');
 $('#lbl_rssi').text((jd.rssi>-71?'Good':(jd.rssi>-81?'Weak':'Poor')) +' ('+ jd.rssi +' dBm)');
+if(jd.cld==0) $('#lbl_cld').text('None');
+else if(jd.cld==1) {$('#lbl_cld').text('Blynk '+['(disconnected)','(connected)'][jd.clds]);}
+else {$('#lbl_cld').text('OTC '+['(not enabled)','(connecting...)','(disconnected)','(connected)'][jd.clds]);}
 $('#head_name').text(jd.name);
 $('#btn_click').html(jd.door?'Close Door':'Open Door').button('refresh');
 if(typeof(jd.temp)!='undefined') {$('#tbl_th').show(); $('#lbl_th').text(jd.temp.toFixed(1)+String.fromCharCode(176)+'C / '+(jd.temp*1.8+32).toFixed(1)+String.fromCharCode(176)+'F (H:'+jd.humid.toFixed(1)+'%)');}
 else {$('#tbl_th').hide();}
+},
+error:function(){
+$('#lbl_beat').text('(offline)').css('color','red');
+$('#lbl_cld').text('disconnected');
+}
 });
 }
 </script>
@@ -374,19 +423,30 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </div>
 <div id='div_cloud' style='display:none;'>
 <table cellpadding=1>
-<tr><td><b>Blynk Token:</b></td><td><input type='text' size=20 maxlength=32 id='auth' data-mini='true' value='' placeholder='(optional)'></td></tr>
-<tr><td><b>Blynk Domain:</b></td><td><input type='text' size=20 maxlength=32 id='bdmn' data-mini='true' value=''></td></tr>
-<tr><td><b>Blynk Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true' value=0></td></tr>
-<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' value='' placeholder='(optional)'></td></tr>
-<tr><td><b>MQTT Server:</b><br><small>set blank to disable</small></td><td><input type='text' size=16 maxlength=32 id='mqtt' data-mini='true' value='' placeholder='(optional)' onInput='update_mqtt()'></td></tr>
-<tr><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true' value=0 disabled></td></tr>
-<tr><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=32 id='mqur' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
-<tr><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' value='' placeholder='(unchanged if left blank)' disabled></td></tr>
-<tr><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=32 id='mqtp' data-mini='true' value='' placeholder='(optional)' disabled></td></tr>
+<tr><td colspan=2><input type='checkbox' id='cld' data-mini='true' onclick='update_cld()'><label for='cld'>Enable Cloud Connection</label></td></tr>
+<tr class='cld'><td><b>Cloud Type:</b></td><td>
+<fieldset data-role='controlgroup' data-mini='true' data-type='horizontal'>
+<input type='radio' name='rd_ct' id='blynk' onclick='update_ct()' checked><label for='blynk'>Blynk</label>
+<input type='radio' name='rd_ct' id='otc' onclick='update_ct()'><label for='otc'>OTC</label>
+</fieldset>
+</td>
+<tr class='cld'><td><b>Cloud Token:</b></td><td><input type='text' size=20 maxlength=64 id='auth' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Server:</b></td><td><input type='text' size=20 maxlength=64 id='bdmn' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true'></td></tr>
+<tr class='cld'><td colspan=2><hr></td></tr>
+<tr><td colspan=2><input type='checkbox' id='mqen' data-mini='true' onclick='update_mqtt()'><label for='mqen'>Enable MQTT</label></td></tr>
+<tr class='mqt'><td><b>MQTT Server:</b></td><td><input type='text' size=16 maxlength=64 id='mqtt' data-mini='true'></td></tr>
+<tr class='mqt'><td><b>MQTT Port:</b></td><td><input type='text' size=5 maxlength=5 id='mqpt' data-mini='true'></td></tr>
+<tr class='mqt'><td><b>MQTT Username:</b></td><td><input type='text' size=16 maxlength=64 id='mqur' data-mini='true' placeholder='(optional)'></td></tr>
+<tr class='mqt'><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' placeholder='(unchanged if left blank)'></td></tr>
+<tr class='mqt'><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=64 id='mqtp' data-mini='true' placeholder='(optional)'></td></tr>
+<tr class='mqt'><td colspan=2><hr></td></tr>
+<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' placeholder='(optional)'></td></tr>
 </table>
 <table>
 <tr><td colspan=4><b>Choose Notifications:</b></td></tr>
 <tr><td><input type='checkbox' id='noto0' data-mini='true'><label for='noto0'>Door<br> Open</label></td><td><input type='checkbox' id='noto1' data-mini='true' ><label for='noto1'>Door<br> Close</label></td><td><input type='checkbox' id='noto2' data-mini='true' disabled><label for='noto2'>Vehicle<br> Leave</label></td><td><input type='checkbox' id='noto3' data-mini='true' disabled ><label for='noto3'>Vehicle<br> Arrive</label></td></tr>
+<tr><td colspan=4><hr></td></tr>
 <tr><td colspan=4><b>Automation:</b></td></tr>
 <tr><td colspan=4></td></tr><tr><td colspan=4></td></tr>
 <tr><td colspan=4>If open for longer than:</td></tr>
@@ -413,47 +473,51 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </fieldset>
 </td></tr>
 <tr><td><b>HTTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='htp' value=0 data-mini='true'></td></tr>
-<tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' value='' data-mini='true' placeholder='(optional)'></td></tr>
-<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=32 id='ntp1' value='' data-mini='true' placeholder='(optional)'></td></tr>
-<tr><td colspan=2><input type='checkbox' id='usi' data-mini='true'><label for='usi'>Use Static IP</label></td></tr>
-<tr><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true' disabled></td></tr>
-<tr><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true' disabled></td></tr>
-<tr><td><b>Subnet:</b></td><td><input type='text' size=15 maxlength=15 id='subn' data-mini='true' disabled></td></tr>
-<tr><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=15 id='dns1' data-mini='true' disabled></td></tr>
-<tr><td colspan=2><input type='checkbox' id='cb_key' data-mini='true'><label for='cb_key'>Change Device Key</label></td></tr>
-<tr><td><b>New Key:</b></td><td><input type='password' size=24 maxlength=32 id='nkey' data-mini='true' disabled></td></tr>
-<tr><td><b>Confirm:</b></td><td><input type='password' size=24 maxlength=32 id='ckey' data-mini='true' disabled></td></tr>      
+<tr><td><b>Host Name:</b></td><td><input type='text' size=15 maxlength=32 id='host' data-mini='true' placeholder='(optional)'></td></tr>
+<tr><td><b>NTP Server:</b></td><td><input type='text' size=15 maxlength=64 id='ntp1' data-mini='true' placeholder='(optional)'></td></tr>
+<tr><td colspan=2><input type='checkbox' id='usi' data-mini='true' onclick='update_usi()'><label for='usi'>Use Static IP</label></td></tr>
+<tr class='si'><td><b>Device IP:</b></td><td><input type='text' size=15 maxlength=15 id='dvip' data-mini='true'></td></tr>
+<tr class='si'><td><b>Gateway IP:</b></td><td><input type='text' size=15 maxlength=15 id='gwip' data-mini='true'></td></tr>
+<tr class='si'><td><b>Subnet:</b></td><td><input type='text' size=15 maxlength=15 id='subn' data-mini='true'></td></tr>
+<tr class='si'><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=64 id='dns1' data-mini='true'></td></tr>
+<tr><td colspan=2><input type='checkbox' id='cb_key' data-mini='true' onclick='update_ckey()'><label for='cb_key'>Change Device Key</label></td></tr>
+<tr class='ckey'><td><b>New Key:</b></td><td><input type='password' size=16 maxlength=64 id='nkey' data-mini='true'></td></tr>
+<tr class='ckey'><td><b>Confirm:</b></td><td><input type='password' size=16 maxlength=64 id='ckey' data-mini='true'></td></tr>      
 </table>
 </div>
 <br />
 <table cellpadding=2>
-<tr><td><b>Device Key:</b></td><td><input type='password' size=24 maxlength=32 id='dkey' data-mini='true'></td></tr>
+<tr><td><b>Device Key:</b></td><td><input type='password' size=24 maxlength=64 id='dkey' data-mini='true'></td></tr>
 <tr><td colspan=2><p id='msg'></p></td></tr>
 </table>
 <div data-role='controlgroup' data-type='horizontal'>
 <a href='#' data-role='button' data-inline='true' data-theme='a' id='btn_back'>Back</a>
 <a href='#' data-role='button' data-inline='true' data-theme='b' id='btn_submit'>Submit</a> 
 </div>
-<table>
-</table>
 </div>
 <div data-role='footer' data-theme='c'>
-<p>&nbsp; OpenGarage Firmware v<label id='fwv'>-</label><div data-role='controlgroup' data-type='horizontal'><a href='update' target='_top' data-role='button' data-inline=true data-mini=true>Firmware Update</a><a href='https://nbviewer.jupyter.org/github/OpenGarage/OpenGarage-Firmware/blob/master/docs/OGManual.pdf' target='_blank' data-role='button' data-inline=true data-mini=true>User Manual</a></p></div>
+<p>&nbsp; OpenGarage Firmware v<label id='fwv'>-</label><div data-role='controlgroup' data-type='horizontal'><a href='update' target='_top' data-role='button' data-inline=true data-mini=true>Firmware Update</a><a href='https://github.com/OpenGarage/OpenGarage-Firmware/tree/master/docs' target='_blank' data-role='button' data-inline=true data-mini=true>User Manual</a></p></div>
 </div>
 </div>
 <script>
+let prev_ct=1;
 function clear_msg() {$('#msg').text('');}
 function update_sno(){
 if(parseInt($('#sn2 option:selected').val())>0){
 $('#sno').selectmenu('enable'); 
 }else{$('#sno').selectmenu('disable');}
 }
-function update_mqtt(){
-if($('#mqtt').val().length>0){
-$('#mqpt').textinput('enable');$('#mqur').textinput('enable');$('#mqpw').textinput('enable');$('#mqtp').textinput('enable');
-}else{
-$('#mqpt').textinput('disable');$('#mqur').textinput('disable');$('#mqpw').textinput('disable');$('#mqtp').textinput('disable');
+function update_cld(){
+if(eval_cb('#cld')) $('.cld').show();
+else $('.cld').hide();
 }
+function update_ct(){
+if(eval_cb('#blynk')&&prev_ct!=1){$('#bdmn').val('blynk.openthings.io');$('#bprt').val(8080);prev_ct=1;}
+else if(eval_cb('#otc')&&prev_ct!=2){$('#bdmn').val('ws.cloud.openthings.io');$('#bprt').val(80);prev_ct=2;}
+}
+function update_mqtt(){
+if(eval_cb('#mqen')) $('.mqt').show();
+else $('.mqt').hide();
 }
 function update_sfi(){
 if(eval_cb('#sf_con')) $('#tbl_cmr').show();
@@ -462,16 +526,14 @@ else $('#tbl_cmr').hide();
 function show_msg(s) {$('#msg').text(s).css('color','red'); setTimeout(clear_msg, 2000);}
 function goback() {history.back();}
 function eval_cb(n)  {return $(n).is(':checked')?1:0;}
-$('#cb_key').click(function(e){
-$('#nkey').textinput($(this).is(':checked')?'enable':'disable');
-$('#ckey').textinput($(this).is(':checked')?'enable':'disable');
-});
-$('#usi').click(function(e){
-$('#dvip').textinput($(this).is(':checked')?'enable':'disable');
-$('#gwip').textinput($(this).is(':checked')?'enable':'disable');
-$('#subn').textinput($(this).is(':checked')?'enable':'disable');
-$('#dns1').textinput($(this).is(':checked')?'enable':'disable');
-});
+function update_ckey(){
+if(eval_cb('#cb_key')) $('.ckey').show();
+else $('.ckey').hide();
+}
+function update_usi(){
+if(eval_cb('#usi')) $('.si').show();
+else $('.si').hide();
+}
 function toggle_opt() {
 $('#div_basic').hide();
 $('#div_cloud').hide();
@@ -488,6 +550,7 @@ function bc(n,e=0) {comm+='&'+n+'=';
 if(e) comm+=encodeURIComponent($('#'+n).val());
 else comm+=$('#'+n).val();
 }
+function cbt(n,v=true) {$('#'+n).attr('checked',v).checkboxradio('refresh');}
 $('#btn_submit').click(function(e){
 e.preventDefault();
 if(confirm('Submit changes?')) {
@@ -507,9 +570,13 @@ comm+='&atob='+atob;
 var noto=0;
 for(var i=1;i>=0;i--) { noto=(noto<<1)+eval_cb('#noto'+i); }
 comm+='&noto='+noto;
+if(eval_cb('#cld')) {comm+='&cld='+(eval_cb('#blynk')?1:2);
+if($('#auth').val().length<32) {show_msg('Cloud token is too short!');return;}}
+else comm+='&cld=0';
 bc('name',1);bc('auth',1);bc('bdmn',1);bc('iftt',1);
 bc('mqtt',1);bc('mqur',1);bc('mqtp',1);bc('mqpt');
 if($('#mqpw').val().length>0) bc('mqpw',1);
+comm+='&mqen='+(eval_cb('#mqen')?1:0);
 bc('bprt');bc('ntp1',1);bc('host',1);
 if($('#cb_key').is(':checked')) {
 if(!$('#nkey').val()) {
@@ -535,10 +602,10 @@ setTimeout(goback, 4000);
 }
 });
 $(document).ready(function() {
-$.getJSON('jo', function(jd) {
+$.getJSON('jo', function(jd){
 $('#fwv').text((jd.fwv/100>>0)+'.'+(jd.fwv/10%10>>0)+'.'+(jd.fwv%10>>0));
 $('#alm').val(jd.alm).selectmenu('refresh');
-if(jd.aoo>0) $('#aoo').attr('checked',true).checkboxradio('refresh');
+if(jd.aoo>0) cbt('aoo');
 $('#lsz').val(jd.lsz).selectmenu('refresh');
 $('#tsn').val(jd.tsn).selectmenu('refresh');
 $('#sn1').val(jd.sn1).selectmenu('refresh');
@@ -551,22 +618,27 @@ $('#riv').val(jd.riv);
 $('#htp').val(jd.htp);
 $('#cdt').val(jd.cdt);
 $('#dri').val(jd.dri);
-if(jd.sto) $('#to_cap').attr('checked',true).checkboxradio('refresh');
-else $('#to_ignore').attr('checked',true).checkboxradio('refresh');
-if(jd.sfi) $('#sf_con').attr('checked',true).checkboxradio('refresh');
-else $('#sf_med').attr('checked',true).checkboxradio('refresh');
+if(jd.sto) cbt('to_cap');
+else cbt('to_ignore');
+if(jd.sfi) cbt('sf_con');
+else cbt('sf_med');
 if(jd.cmr) $('#cmr').val(jd.cmr);
 update_sfi();
 $('#ati').val(jd.ati);
 $('#atib').val(jd.atib);
-for(var i=0;i<=1;i++) {if(jd.ato&(1<<i)) $('#ato'+i).attr('checked',true).checkboxradio('refresh');}
-for(var i=0;i<=1;i++) {if(jd.atob&(1<<i)) $('#atob'+i).attr('checked',true).checkboxradio('refresh');}
-for(var i=0;i<=1;i++) {if(jd.noto&(1<<i)) $('#noto'+i).attr('checked',true).checkboxradio('refresh');}
+for(var i=0;i<=1;i++) {if(jd.ato&(1<<i)) cbt('ato'+i);}
+for(var i=0;i<=1;i++) {if(jd.atob&(1<<i)) cbt('atob'+i);}
+for(var i=0;i<=1;i++) {if(jd.noto&(1<<i)) cbt('noto'+i);}
 $('#name').val(jd.name);
+if(jd.cld>0) cbt('cld');
+if(jd.cld==1) {cbt('blynk');cbt('otc',false);prev_ct=1;}
+else if(jd.cld==2) {cbt('otc');cbt('blynk',false);prev_ct=2;}
+update_cld();
 $('#auth').val(jd.auth);
 $('#bdmn').val(jd.bdmn);
 $('#bprt').val(jd.bprt);
 if(jd.iftt) $('#iftt').val(jd.iftt);
+if(jd.mqen>0) cbt('mqen');
 $('#mqtt').val(jd.mqtt);
 if(jd.mqur) $('#mqur').val(jd.mqur);
 if(jd.mqtp) $('#mqtp').val(jd.mqtp);
@@ -576,15 +648,13 @@ $('#dvip').val(jd.dvip);
 $('#gwip').val(jd.gwip);
 $('#subn').val(jd.subn);
 $('#dns1').val(jd.dns1);
-if(jd.usi>0) $('#usi').attr('checked',true).checkboxradio('refresh');
-$('#dvip').textinput(jd.usi>0?'enable':'disable');
-$('#gwip').textinput(jd.usi>0?'enable':'disable');
-$('#subn').textinput(jd.usi>0?'enable':'disable');
-$('#dns1').textinput(jd.usi>0?'enable':'disable');  
+if(jd.usi>0) cbt('usi');
+update_usi();
 if(jd.ntp1) $('#ntp1').val(jd.ntp1);
 if(jd.host) $('#host').val(jd.host);
 });
 });
+update_ckey();
 </script>
 </body>
 )";
@@ -599,10 +669,10 @@ const char sta_update_html[] PROGMEM = R"(<head>
 <div data-role='page' id='page_update'>
 <div data-role='header'><h3>OpenGarage Firmware Update</h3></div>
 <div data-role='content'>
-<form method='POST' action='/update' id='fm' enctype='multipart/form-data'>
+<form method='POST' action='' id='fm' enctype='multipart/form-data'>
 <table cellspacing=4>
 <tr><td><input type='file' name='file' accept='.bin' id='file'></td></tr>
-<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=32 id='dkey'></td></tr>
+<tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=64 id='dkey'></td></tr>
 <tr><td><label id='msg'></label></td></tr>
 </table>
 <div data-role='controlgroup' data-type='horizontal'>    
@@ -649,7 +719,7 @@ show_msg('Update failed.',0,'red');
 }
 }
 };
-xhr.open('POST', 'update', true);
+xhr.open('POST', '//' + window.location.hostname + ':8080' + window.location.pathname, true);
 xhr.send(fd);
 });
 </script>

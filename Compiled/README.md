@@ -2,6 +2,8 @@ This folder contains compiled OpenGarage firmware files.
 
 To use OTA (over-the-air) update:
 
+* Please note to upgrade to Firmware 1.2.0 and above you need to have ESP8266 WiFi chip with 4MB flash. The very early versions of OpenGarage (v1.0 and v1.1) unfortunately do not qualify as they only have 2MB flash. All later versions (v1.3, v1.4, v2.0 and above) have 4MB flash.
+
 * Download the specific firmware file (e.g. og_x.x.x.bin)
 
 * Before uploading, close the Blynk and OpenGarage app if you use either of them, to avoid them interfering with the upload process.
