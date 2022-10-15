@@ -7,14 +7,14 @@ $(ESP_LIBS)/ESP8266WebServer \
 $(ESP_LIBS)/ESP8266HTTPClient \
 $(ESP_LIBS)/Ticker \
 $(ESP_LIBS)/Hash \
-~/Arduino/libraries/Blynk \
-~/Arduino/libraries/pubsubclient \
-~/Arduino/libraries/AM2320 \
-~/Arduino/libraries/OneWire \
-~/Arduino/libraries/DHTesp \
-~/Arduino/libraries/DallasTemperature \
-~/Arduino/libraries/OTF-Controller-Library \
-~/Arduino/libraries/WebSockets \
+$(HOME)/Arduino/libraries/Blynk \
+$(HOME)/Arduino/libraries/pubsubclient \
+$(HOME)/Arduino/libraries/AM2320 \
+$(HOME)/Arduino/libraries/OneWire \
+$(HOME)/Arduino/libraries/DHTesp \
+$(HOME)/Arduino/libraries/DallasTemperature \
+$(HOME)/Arduino/libraries/OTF-Controller-Library \
+$(HOME)/Arduino/libraries/WebSockets \
 .
 
 ESP_ROOT = $(HOME)/esp8266_2.7.4/
