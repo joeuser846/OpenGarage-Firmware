@@ -1,4 +1,4 @@
-SKETCH = ./examples/ogMainArduino/ogMainArduino.ino
+SKETCH = ./ogMainArduino.ino
 LIBS = $(ESP_LIBS)/Wire \
 $(ESP_LIBS)/ESP8266WiFi \
 $(ESP_LIBS)/ESP8266mDNS \
