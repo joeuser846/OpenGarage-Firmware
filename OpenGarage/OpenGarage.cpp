@@ -180,7 +180,6 @@ void OpenGarage::begin() {
 }
 
 void OpenGarage::options_setup() {
-	int i;
 	if(!FILESYS.exists(config_fname)) { // if config file does not exist
 		DEBUG_PRINTLN(F("create config file"));
 		options_save(); // save default option values
@@ -273,7 +272,6 @@ void OpenGarage::options_save() {
 }
 
 uint OpenGarage::read_distance() {
-	byte i;
 	static uint last_returned;
 	uint32_t buf[KAVG];
 	if(!fullbuffer) {

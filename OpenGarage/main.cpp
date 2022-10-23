@@ -223,9 +223,8 @@ String get_ap_ssid() {
 }
 
 String get_ip() {
-	String ip = "";
 	IPAddress _ip = WiFi.localIP();
-	ip = _ip[0];
+	String ip = String(_ip[0]);
 	ip += ".";
 	ip += _ip[1];
 	ip += ".";
@@ -659,7 +658,6 @@ void on_ap_change_config(const OTF::Request &req, OTF::Response &res) {
 			if(strcmp(cld, "blynk")==0 || strcmp(cld, "otc")==0) {
 				char *bdmn = req.getQueryParameter("bdmn");
 				char *bprt = req.getQueryParameter("bprt");
-				int port;
 				if(strcmp(cld, "blynk")==0) {
 					og.options[OPTION_BDMN].sval=(bdmn==NULL||strlen(bdmn)==0)?DEFAULT_BLYNK_DMN:bdmn;
 					og.options[OPTION_BPRT].ival=(bprt==NULL||strlen(bprt)==0)?DEFAULT_BLYNK_PRT:String(bprt).toInt();
@@ -820,20 +818,20 @@ void process_ui()
 	}
 	else {
 		if (button_down_time > 0) {
-		  ulong curr = millis();
-		  if(curr > button_down_time + BUTTON_FACRESET_TIMEOUT) {
-		    og.state = OG_STATE_RESET;
-		  } else if(curr > button_down_time + BUTTON_APRESET_TIMEOUT) {
-		    og.reset_to_ap();
-		  } else if(curr > button_down_time + BUTTON_REPORTIP_TIMEOUT) {        
-		    // report IP
-		    ipString = get_ip();
-		    ipString.replace(".", ". ");
-		    report_ip();
-		  } else if(curr > button_down_time + 50) {
-		    og.click_relay();
-		  }
-		  button_down_time = 0;
+			ulong curr = millis();
+			if(curr > button_down_time + BUTTON_FACRESET_TIMEOUT) {
+				og.state = OG_STATE_RESET;
+			} else if(curr > button_down_time + BUTTON_APRESET_TIMEOUT) {
+				og.reset_to_ap();
+			} else if(curr > button_down_time + BUTTON_REPORTIP_TIMEOUT) {        
+				// report IP
+				ipString = get_ip();
+				ipString.replace(".", ". ");
+				report_ip();
+			} else if(curr > button_down_time + 50) {
+				og.click_relay();
+			}
+			button_down_time = 0;
 		}
 	}
 	// process led
@@ -984,6 +982,7 @@ bool mqtt_connect_subscribe() {
 			}
 		}
 	}
+	return false;
 }
 
 void perform_notify(String s) {
@@ -1272,7 +1271,6 @@ void time_keeping() {
 	}
 
 	if(!curr_utc_time || (curr_utc_time > time_keeping_timeout)) {
-		byte tick = 0;
 		ulong gt = 0;
 		ulong timeout = millis()+30000;
 		do {
