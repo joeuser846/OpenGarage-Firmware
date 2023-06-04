@@ -1,5 +1,5 @@
 
-This folder contains firmware source code and documentation for OpenGarage. For proudct details, visit [http://opengarage.io](http://opengarage.io)
+This folder contains firmware source code and documentation for OpenGarage. For product details, visit [http://opengarage.io](http://opengarage.io)
 
 For Firmware release notes, go to [https://github.com/OpenGarage/OpenGarage-Firmware/releases](https://github.com/OpenGarage/OpenGarage-Firmware/releases)
 
