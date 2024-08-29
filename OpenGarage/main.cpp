@@ -1012,6 +1012,27 @@ void perform_notify(String s) {
 		}
 	}
 
+	// Email notification
+	if(og.options[OPTION_EMEN].ival>0) {
+		DEBUG_PRINTLN(" Sending EMail notification");
+		DEBUG_PRINTLN(GET_FREE_HEAP);
+		EMailSender::EMailMessage email_message;
+		email_message.subject = og.options[OPTION_NAME].sval.c_str();
+		email_message.message = s;
+		const char *email_host = og.options[OPTION_SMTP].sval.c_str();
+		const char *email_pword = og.options[OPTION_APWD].sval.c_str();
+		const char *email_sender = og.options[OPTION_SEND].sval.c_str();
+		const char *email_recip = og.options[OPTION_RECP].sval.c_str();
+		unsigned int email_port = og.options[OPTION_SPRT].ival;
+		if(email_host && email_pword && email_sender && email_recip){
+			EMailSender emailSend(email_host, email_pword);
+			emailSend.setSMTPServer(email_host);
+			emailSend.setSMTPPort(email_port);
+			DEBUG_PRINTLN(GET_FREE_HEAP);
+			EMailSender::Response resp = emailSend.send(email_recip, email_message);
+		}
+	}
+
 	//Mqtt notification
 
 	if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) {
