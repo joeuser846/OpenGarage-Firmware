@@ -81,7 +81,8 @@ void otf_send_html_P(OTF::Response &res, const __FlashStringHelper *content) {
 	res.writeHeader(F("Access-Control-Allow-Origin"), F("*")); // from esp8266 2.4 this has to be sent explicitly
 	res.writeHeader(F("Content-Length"), strlen_P((char *) content));
 	res.writeHeader(F("Connection"), F("close"));
-	res.writeBodyChunk((char *) "%s", content);
+	//res.writeBodyChunk((char *) "%s", content);
+	res.writeBodyData(content, strlen_P((char*)content));
 	DEBUG_PRINT(strlen_P((char *) content));
 	DEBUG_PRINTLN(F(" bytes sent."));
 }
@@ -92,7 +93,8 @@ void otf_send_json(OTF::Response &res, String json) {
 	res.writeHeader(F("Access-Control-Allow-Origin"), F("*")); // from esp8266 2.4 this has to be sent explicitly
 	res.writeHeader(F("Content-Length"), json.length());
 	res.writeHeader(F("Connection"), F("close"));
-	res.writeBodyChunk((char *) "%s",json.c_str());
+	//res.writeBodyChunk((char *) "%s",json.c_str());
+	res.writeBodyData(json.c_str(), json.length());
 }
 
 void otf_send_result(OTF::Response &res, byte code, const char *item = NULL) {
