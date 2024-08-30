@@ -987,59 +987,75 @@ bool mqtt_connect_subscribe() {
 	return false;
 }
 
+void blynkNotify(String s){
+	// Blynk notification
+	DEBUG_PRINTLN(F(" Sending blynk notification"));
+	Blynk.notify(s);
+}
+
+void iftttNotify(String s){
+	DEBUG_PRINTLN(" Sending IFTTT Notification");
+	http.begin(httpclient, "http://maker.ifttt.com/trigger/opengarage/with/key/"+og.options[OPTION_IFTT].sval);
+	http.addHeader("Content-Type", "application/json");
+	http.POST("{\"value1\":\""+s+"\"}");
+	String payload = http.getString();
+	http.end();
+	if(payload.indexOf("Congratulations") >= 0) {
+		DEBUG_PRINTLN(" Successfully updated IFTTT");
+	}else{
+		DEBUG_PRINT(" Error from IFTTT: ");
+		DEBUG_PRINTLN(payload);
+	}
+}
+
+void emailNotify(String s){
+	DEBUG_PRINTLN(" Sending EMail notification");
+	DEBUG_PRINTLN(GET_FREE_HEAP);
+	EMailSender::EMailMessage email_message;
+	email_message.subject = og.options[OPTION_NAME].sval.c_str();
+	email_message.message = s;
+	const char *email_host = og.options[OPTION_SMTP].sval.c_str();
+	const char *email_pword = og.options[OPTION_APWD].sval.c_str();
+	const char *email_sender = og.options[OPTION_SEND].sval.c_str();
+	const char *email_recip = og.options[OPTION_RECP].sval.c_str();
+	unsigned int email_port = og.options[OPTION_SPRT].ival;
+	if(email_host && email_pword && email_sender && email_recip){
+		EMailSender emailSend(email_sender, email_pword);
+		emailSend.setSMTPServer(email_host);
+		emailSend.setSMTPPort(email_port);
+		DEBUG_PRINTLN(GET_FREE_HEAP);
+		EMailSender::Response resp = emailSend.send(email_recip, email_message);
+	}
+}
+
+void mqttNotify(String s){
+	if (mqttclient.connected()) {
+		DEBUG_PRINTLN(" Sending MQTT Notification");
+		mqttclient.publish((mqtt_topic + "/OUT/NOTIFY").c_str(),s.c_str()); 
+	}
+}
+
 void perform_notify(String s) {
 	DEBUG_PRINT(F("Sending Notify to connected systems, value:"));
 	DEBUG_PRINTLN(s);
-	// Blynk notification
-	if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected()) {
-		DEBUG_PRINTLN(F(" Blynk Notify"));
-		Blynk.notify(s);
+
+	if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected()){
+		blynkNotify(s);
 	}
 
 	// IFTTT notification
 	if(og.options[OPTION_IFTT].sval.length()>7) { // key size is at least 8
-		DEBUG_PRINTLN(" Sending IFTTT Notification");
-		http.begin(httpclient, "http://maker.ifttt.com/trigger/opengarage/with/key/"+og.options[OPTION_IFTT].sval);
-		http.addHeader("Content-Type", "application/json");
-		http.POST("{\"value1\":\""+s+"\"}");
-		String payload = http.getString();
-		http.end();
-		if(payload.indexOf("Congratulations") >= 0) {
-			DEBUG_PRINTLN(" Successfully updated IFTTT");
-		}else{
-			DEBUG_PRINT(" Error from IFTTT: ");
-			DEBUG_PRINTLN(payload);
-		}
+		iftttNotify(s);
 	}
 
 	// Email notification
 	if(og.options[OPTION_EMEN].ival>0) {
-		DEBUG_PRINTLN(" Sending EMail notification");
-		DEBUG_PRINTLN(GET_FREE_HEAP);
-		EMailSender::EMailMessage email_message;
-		email_message.subject = og.options[OPTION_NAME].sval.c_str();
-		email_message.message = s;
-		const char *email_host = og.options[OPTION_SMTP].sval.c_str();
-		const char *email_pword = og.options[OPTION_APWD].sval.c_str();
-		const char *email_sender = og.options[OPTION_SEND].sval.c_str();
-		const char *email_recip = og.options[OPTION_RECP].sval.c_str();
-		unsigned int email_port = og.options[OPTION_SPRT].ival;
-		if(email_host && email_pword && email_sender && email_recip){
-			EMailSender emailSend(email_host, email_pword);
-			emailSend.setSMTPServer(email_host);
-			emailSend.setSMTPPort(email_port);
-			DEBUG_PRINTLN(GET_FREE_HEAP);
-			EMailSender::Response resp = emailSend.send(email_recip, email_message);
-		}
+		emailNotify(s);
 	}
 
 	//Mqtt notification
-
 	if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) {
-		if (mqttclient.connected()) {
-		    DEBUG_PRINTLN(" Sending MQTT Notification");
-		    mqttclient.publish((mqtt_topic + "/OUT/NOTIFY").c_str(),s.c_str()); 
-		}
+		mqttNotify(s);
 	}
 }
 
@@ -1482,42 +1498,42 @@ void do_loop() {
 				restart_in(10000);
 			}
 			
-	} else {
-		if(WiFi.status() == WL_CONNECTED) {
-			MDNS.update();
-			time_keeping();
-			check_status(); //This checks the door, sends info to services and processes the automation rules
-			otf->loop();
-			updateServer->handleClient();
+		} else {
+			if(WiFi.status() == WL_CONNECTED) {
+				MDNS.update();
+				time_keeping();
+				check_status(); //This checks the door, sends info to services and processes the automation rules
+				otf->loop();
+				updateServer->handleClient();
 
-			if(og.options[OPTION_CLD].ival==CLD_BLYNK)
-			  Blynk.run();
+				if(og.options[OPTION_CLD].ival==CLD_BLYNK)
+				Blynk.run();
 
-			//Handle MQTT
-			if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) { // if enabled and mqtt server looks valid
-				if (!mqttclient.connected()) {
-					mqtt_id = get_ap_ssid();
-					mqtt_topic = og.options[OPTION_MQTP].sval;
-					if(mqtt_topic.length()==0) mqtt_topic = og.options[OPTION_NAME].sval;
-					mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), og.options[OPTION_MQPT].ival);
-					mqttclient.setCallback(mqtt_callback); 		
-					mqtt_connect_subscribe();
+				//Handle MQTT
+				if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) { // if enabled and mqtt server looks valid
+					if (!mqttclient.connected()) {
+						mqtt_id = get_ap_ssid();
+						mqtt_topic = og.options[OPTION_MQTP].sval;
+						if(mqtt_topic.length()==0) mqtt_topic = og.options[OPTION_NAME].sval;
+						mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), og.options[OPTION_MQPT].ival);
+						mqttclient.setCallback(mqtt_callback); 		
+						mqtt_connect_subscribe();
+						}
+						else {mqttclient.loop();} //Processes MQTT Pings/keep alives
 					}
-					else {mqttclient.loop();} //Processes MQTT Pings/keep alives
-				}
-				connecting_timeout = 0;
-			} else {
-				//og.state = OG_STATE_INITIAL;
-				if(!connecting_timeout) {
-					DEBUG_PRINTLN(F("State is CONNECTED but WiFi is disconnected, start timeout counter."));
-					connecting_timeout = millis()+60000;
-				}
-				else if(millis() > connecting_timeout) {
-					DEBUG_PRINTLN(F("timeout reached, reboot"));
-					og.restart();
+					connecting_timeout = 0;
+				} else {
+					//og.state = OG_STATE_INITIAL;
+					if(!connecting_timeout) {
+						DEBUG_PRINTLN(F("State is CONNECTED but WiFi is disconnected, start timeout counter."));
+						connecting_timeout = millis()+60000;
+					}
+					else if(millis() > connecting_timeout) {
+						DEBUG_PRINTLN(F("timeout reached, reboot"));
+						og.restart();
+					}
 				}
 			}
-		}
 		break;
 	}
 
