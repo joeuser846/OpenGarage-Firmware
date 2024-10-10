@@ -1294,6 +1294,9 @@ void time_keeping() {
 	static bool configured = false;
 	static ulong prev_millis = 0;
 	static ulong time_keeping_timeout = 0;
+	static unsigned char failed_ntp_calls = 0;
+	const unsigned char MAX_FAILED_NTP_CALLS = 20;
+	const ulong NTP_VALID_TIME = 1577836800UL;
 
 	if(!configured) {
 		if(valid_url(og.options[OPTION_NTP1].sval)) {
@@ -1311,16 +1314,19 @@ void time_keeping() {
 
 	if(!curr_utc_time || (curr_utc_time > time_keeping_timeout)) {
 		ulong gt = 0;
-		ulong timeout = millis()+30000;
-		do {
-			gt = time(nullptr);
-			delay(2000);
-		} while(gt<1577836800UL && millis()<timeout);
-		if(gt<1577836800UL) {
-			// if we didn't get response, re-try after 2 seconds
-			DEBUG_PRINTLN(F("ntp invalid! re-try in 60 seconds"));
-			time_keeping_timeout = curr_utc_time + 60;
+		gt = time(nullptr);
+		if(gt<NTP_VALID_TIME) {
+			// we didn't get a valid response
+			if(failed_ntp_calls >= MAX_FAILED_NTP_CALLS) { // if already reached max failed calls
+				time_keeping_timeout = curr_utc_time + 60; // re-try after a minute
+				DEBUG_PRINTLN(F("max failed ntp reached! re-try in 60 seconds"));
+			} else {
+				failed_ntp_calls ++;
+				time_keeping_timeout = curr_utc_time + 2; // re-try after 2 seconds
+				DEBUG_PRINTLN(F("ntp invalid! re-try in 2 seconds"));
+			}
 		} else {
+			failed_ntp_calls = 0;
 			curr_utc_time = gt;
 			curr_utc_hour = (curr_utc_time % 86400)/3600;
 			DEBUG_PRINT(F("Updated time from NTP: "));

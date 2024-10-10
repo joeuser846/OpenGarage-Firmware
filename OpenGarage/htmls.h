@@ -266,7 +266,7 @@ timeout:5000,
 success:function(jd){
 $('#fwv').text((jd.fwv/100>>0)+'.'+(jd.fwv/10%10>>0)+'.'+(jd.fwv%10>>0));
 $('#lbl_dist').text(jd.dist +' (cm)').css('color', jd.dist==450?'red':'black');
-$('#lbl_status').text(jd.door?'OPEN':'CLOSED').css('color',jd.door?'red':'green');
+$('#lbl_status').text(jd.door?'OPEN':'CLOSED').css('color',jd.door?'red':'green'); 
 if (jd.vehicle >=2){
 $('#lbl_vstatus1').hide();
 $('#lbl_vstatus').text('');
@@ -309,7 +309,7 @@ const char sta_logs_html[] PROGMEM = R"(<head>
 </head>
 <body>
 <div data-role='page' id='page_log'>
-<div data-role='header'><h3><label id='lbl_name'></label> Log</h3></div>
+<div data-role='header'><h3><label id='lbl_name'></label> Log</h3></div>    
 <div data-role='content'>
 <p>Below are the most recent <label id='lbl_nr'></label> records</p>
 <p>Current time is <label id='lbl_time'></label></p>
@@ -429,9 +429,9 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 <input type='radio' name='rd_ct' id='blynk' onclick='update_ct()' checked><label for='blynk'>Blynk</label>
 <input type='radio' name='rd_ct' id='otc' onclick='update_ct()'><label for='otc'>OTC</label>
 </fieldset>
-</td>
-<tr class='cld'><td><b>Cloud Token:</b></td><td><input type='text' size=20 maxlength=64 id='auth' data-mini='true'></td></tr>
-<tr class='cld'><td><b>Cloud Server:</b></td><td><input type='text' size=20 maxlength=64 id='bdmn' data-mini='true'></td></tr>
+</td></tr>
+<tr class='cld'><td><b>Cloud Token:</b></td><td><input type='text' size=22 maxlength=64 id='auth' data-mini='true'></td></tr>
+<tr class='cld'><td><b>Cloud Server:</b></td><td><input type='text' size=22 maxlength=64 id='bdmn' data-mini='true'></td></tr>
 <tr class='cld'><td><b>Cloud Port:</b></td><td><input type='text' size=5 maxlength=5 id='bprt' data-mini='true'></td></tr>
 <tr class='cld'><td colspan=2><hr></td></tr>
 <tr><td colspan=2><input type='checkbox' id='mqen' data-mini='true' onclick='update_mqtt()'><label for='mqen'>Enable MQTT</label></td></tr>
@@ -441,18 +441,18 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 <tr class='mqt'><td><b>MQTT Password:</b></td><td><input type='password' size=16 maxlength=64 id='mqpw' data-mini='true' placeholder='(unchanged if left blank)'></td></tr>
 <tr class='mqt'><td><b>MQTT Topic:</b></td><td><input type='text' size=16 maxlength=64 id='mqtp' data-mini='true' placeholder='(optional)'></td></tr>
 <tr class='mqt'><td colspan=2><hr></td></tr>
-<tr><td colspan=2><input type='checkbox' id='emen' data-mini='true' onclick='update_email()'><label for='emen'>Enable Email</label></td></tr>
+<tr><td colspan=2><input type='checkbox' id='emen' data-mini='true' onclick='update_email()'><label for='emen'>Enable Email Notifications</label></td></tr>
 <tr class='email'><td><b>SMTP Server:</b></td><td><input type='text' size=16 maxlength=64 id='smtp' data-mini='true'></td></tr>
 <tr class='email'><td><b>SMTP Port:</b></td><td><input type='text' size=5 maxlength=5 id='sprt' data-mini='true'></td></tr>
 <tr class='email'><td><b>Sender Email:</b></td><td><input type='text' size=16 maxlength=64 id='send' data-mini='true'></td></tr>
 <tr class='email'><td><b>App Password:</b></td><td><input type='text' size=16 maxlength=64 id='apwd' data-mini='true'></td></tr>
 <tr class='email'><td><b>Recipient Email:</b></td><td><input type='text' size=16 maxlength=64 id='recp' data-mini='true'></td></tr>
-<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' placeholder='(optional)'></td></tr>
+<tr height=30px><td colspan=2><b>Choose Notification Events:</b></td></tr>
+<tr><td><input type='checkbox' id='noto0' data-mini='true'><label for='noto0'>Door Open</label></td><td><input type='checkbox' id='noto1' data-mini='true' ><label for='noto1'>Door Close</label></td></tr>
+<tr><td><b>IFTTT Key:</b></td><td><input type='text' size=20 maxlength=64 id='iftt' data-mini='true' placeholder='(if using IFTTT notification)'></td></tr>
 </table>
 <table>
-<tr><td colspan=4><b>Choose Notifications:</b></td></tr>
-<tr><td><input type='checkbox' id='noto0' data-mini='true'><label for='noto0'>Door<br> Open</label></td><td><input type='checkbox' id='noto1' data-mini='true' ><label for='noto1'>Door<br> Close</label></td><td><input type='checkbox' id='noto2' data-mini='true' disabled><label for='noto2'>Vehicle<br> Leave</label></td><td><input type='checkbox' id='noto3' data-mini='true' disabled ><label for='noto3'>Vehicle<br> Arrive</label></td></tr>
-<tr><td colspan=4><hr></td></tr>
+<tr><td colspan=4><hr></td></tr>  
 <tr><td colspan=4><b>Automation:</b></td></tr>
 <tr><td colspan=4></td></tr><tr><td colspan=4></td></tr>
 <tr><td colspan=4>If open for longer than:</td></tr>
@@ -488,7 +488,7 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 <tr class='si'><td><b>DNS1:</b></td><td><input type='text' size=15 maxlength=64 id='dns1' data-mini='true'></td></tr>
 <tr><td colspan=2><input type='checkbox' id='cb_key' data-mini='true' onclick='update_ckey()'><label for='cb_key'>Change Device Key</label></td></tr>
 <tr class='ckey'><td><b>New Key:</b></td><td><input type='password' size=16 maxlength=64 id='nkey' data-mini='true'></td></tr>
-<tr class='ckey'><td><b>Confirm:</b></td><td><input type='password' size=16 maxlength=64 id='ckey' data-mini='true'></td></tr>
+<tr class='ckey'><td><b>Confirm:</b></td><td><input type='password' size=16 maxlength=64 id='ckey' data-mini='true'></td></tr>      
 </table>
 </div>
 <br />
@@ -498,7 +498,7 @@ const char sta_options_html[] PROGMEM = R"(<head><title>OpenGarage</title><meta 
 </table>
 <div data-role='controlgroup' data-type='horizontal'>
 <a href='#' data-role='button' data-inline='true' data-theme='a' id='btn_back'>Back</a>
-<a href='#' data-role='button' data-inline='true' data-theme='b' id='btn_submit'>Submit</a>
+<a href='#' data-role='button' data-inline='true' data-theme='b' id='btn_submit'>Submit</a> 
 </div>
 </div>
 <div data-role='footer' data-theme='c'>
@@ -510,7 +510,7 @@ let prev_ct=1;
 function clear_msg() {$('#msg').text('');}
 function update_sno(){
 if(parseInt($('#sn2 option:selected').val())>0){
-$('#sno').selectmenu('enable');
+$('#sno').selectmenu('enable'); 
 }else{$('#sno').selectmenu('disable');}
 }
 function update_cld(){
@@ -694,7 +694,7 @@ const char sta_update_html[] PROGMEM = R"(<head>
 <tr><td><b>Device key: </b><input type='password' name='dkey' size=16 maxlength=64 id='dkey'></td></tr>
 <tr><td><label id='msg'></label></td></tr>
 </table>
-<div data-role='controlgroup' data-type='horizontal'>
+<div data-role='controlgroup' data-type='horizontal'>    
 <a href='#' data-role='button' data-inline='true' data-theme='a' id='btn_back'>Back</a>
 <a href='#' data-role='button' data-inline='true' data-theme='b' id='btn_submit'>Submit</a>
 </div>

@@ -24,7 +24,7 @@
 #define _DEFINES_H
 
 /** Firmware version, hardware version, and maximal values */
-#define OG_FWV     122 // Firmware version: 122 means 1.2.2
+#define OG_FWV     123 // Firmware version: 123 means 1.2.3
 
 /** GPIO pins */
 #define PIN_RELAY  15 // D8 on nodemcu
@@ -202,7 +202,7 @@ typedef enum {
 #define LED_FAST_BLINK  100
 #define LED_SLOW_BLINK  500
 
-#define TIME_SYNC_TIMEOUT 1800 //Issues connecting to MQTT can throw off the time function, sync more often
+#define TIME_SYNC_TIMEOUT 3600 //Issues connecting to MQTT can throw off the time function, sync more often
 
 #define TMP_BUFFER_SIZE 100
 
