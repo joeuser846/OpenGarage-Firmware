@@ -80,8 +80,8 @@ OptionStruct OpenGarage::options[] = {
 	{"mqpw", 0, 0, ""},
 	{"mqtp", 0, 0, ""},
 	{"emen", 0, 1, ""},
-	{"smtp", 0, 0, ""},
-	{"sprt", 465, 65535, ""},
+	{"smtp", 0, 0, DEFAULT_SMTP_SERVER},
+	{"sprt", DEFAULT_SMTP_PORT, 65535, ""},
 	{"send", 0, 0, ""},
 	{"apwd", 0, 0, ""},
 	{"recp", 0, 0, ""},
@@ -111,7 +111,7 @@ void ud_start_trigger() {
 	digitalWrite(PIN_TRIG, LOW);
 }
 
-ICACHE_RAM_ATTR void ud_isr() {
+IRAM_ATTR void ud_isr() {
 	if(!triggered) return;
 
 	// ECHO pin went from low to high

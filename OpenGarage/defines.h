@@ -57,6 +57,9 @@
 #define DEFAULT_OTC_DMN    "ws.cloud.openthings.io"
 #define DEFAULT_OTC_PRT    80
 
+#define DEFAULT_SMTP_SERVER "smtp.gmail.com"
+#define DEFAULT_SMTP_PORT   465
+
 #define OG_SN1_CEILING  0x00 // SN1 is built-in ultrasonic sensor
 #define OG_SN1_SIDE     0x01
 
