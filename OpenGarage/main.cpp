@@ -987,38 +987,75 @@ bool mqtt_connect_subscribe() {
 	return false;
 }
 
+void blynkNotify(String s){
+	// Blynk notification
+	DEBUG_PRINTLN(F(" Sending blynk notification"));
+	Blynk.notify(s);
+}
+
+void iftttNotify(String s){
+	DEBUG_PRINTLN(" Sending IFTTT Notification");
+	http.begin(httpclient, "http://maker.ifttt.com/trigger/opengarage/with/key/"+og.options[OPTION_IFTT].sval);
+	http.addHeader("Content-Type", "application/json");
+	http.POST("{\"value1\":\""+s+"\"}");
+	String payload = http.getString();
+	http.end();
+	if(payload.indexOf("Congratulations") >= 0) {
+		DEBUG_PRINTLN(" Successfully updated IFTTT");
+	}else{
+		DEBUG_PRINT(" Error from IFTTT: ");
+		DEBUG_PRINTLN(payload);
+	}
+}
+
+void emailNotify(String s){
+	DEBUG_PRINTLN(" Sending EMail notification");
+	DEBUG_PRINTLN(GET_FREE_HEAP);
+	EMailSender::EMailMessage email_message;
+	email_message.subject = og.options[OPTION_NAME].sval.c_str();
+	email_message.message = s;
+	const char *email_host = og.options[OPTION_SMTP].sval.c_str();
+	const char *email_pword = og.options[OPTION_APWD].sval.c_str();
+	const char *email_sender = og.options[OPTION_SEND].sval.c_str();
+	const char *email_recip = og.options[OPTION_RECP].sval.c_str();
+	unsigned int email_port = og.options[OPTION_SPRT].ival;
+	if(email_host && email_pword && email_sender && email_recip){
+		EMailSender emailSend(email_sender, email_pword);
+		emailSend.setSMTPServer(email_host);
+		emailSend.setSMTPPort(email_port);
+		DEBUG_PRINTLN(GET_FREE_HEAP);
+		EMailSender::Response resp = emailSend.send(email_recip, email_message);
+	}
+}
+
+void mqttNotify(String s){
+	if (mqttclient.connected()) {
+		DEBUG_PRINTLN(" Sending MQTT Notification");
+		mqttclient.publish((mqtt_topic + "/OUT/NOTIFY").c_str(),s.c_str()); 
+	}
+}
+
 void perform_notify(String s) {
 	DEBUG_PRINT(F("Sending Notify to connected systems, value:"));
 	DEBUG_PRINTLN(s);
-	// Blynk notification
-	if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected()) {
-		DEBUG_PRINTLN(F(" Blynk Notify"));
-		Blynk.notify(s);
+
+	if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected()){
+		blynkNotify(s);
 	}
 
 	// IFTTT notification
 	if(og.options[OPTION_IFTT].sval.length()>7) { // key size is at least 8
-		DEBUG_PRINTLN(" Sending IFTTT Notification");
-		http.begin(httpclient, "http://maker.ifttt.com/trigger/opengarage/with/key/"+og.options[OPTION_IFTT].sval);
-		http.addHeader("Content-Type", "application/json");
-		http.POST("{\"value1\":\""+s+"\"}");
-		String payload = http.getString();
-		http.end();
-		if(payload.indexOf("Congratulations") >= 0) {
-			DEBUG_PRINTLN(" Successfully updated IFTTT");
-		}else{
-			DEBUG_PRINT(" Error from IFTTT: ");
-			DEBUG_PRINTLN(payload);
-		}
+		iftttNotify(s);
+	}
+
+	// Email notification
+	if(og.options[OPTION_EMEN].ival>0) {
+		emailNotify(s);
 	}
 
 	//Mqtt notification
-
 	if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) {
-		if (mqttclient.connected()) {
-		    DEBUG_PRINTLN(" Sending MQTT Notification");
-		    mqttclient.publish((mqtt_topic + "/OUT/NOTIFY").c_str(),s.c_str()); 
-		}
+		mqttNotify(s);
 	}
 }
 
@@ -1257,6 +1294,9 @@ void time_keeping() {
 	static bool configured = false;
 	static ulong prev_millis = 0;
 	static ulong time_keeping_timeout = 0;
+	static unsigned char failed_ntp_calls = 0;
+	const unsigned char MAX_FAILED_NTP_CALLS = 20;
+	const ulong NTP_VALID_TIME = 1577836800UL;
 
 	if(!configured) {
 		if(valid_url(og.options[OPTION_NTP1].sval)) {
@@ -1274,16 +1314,19 @@ void time_keeping() {
 
 	if(!curr_utc_time || (curr_utc_time > time_keeping_timeout)) {
 		ulong gt = 0;
-		ulong timeout = millis()+30000;
-		do {
-			gt = time(nullptr);
-			delay(2000);
-		} while(gt<1577836800UL && millis()<timeout);
-		if(gt<1577836800UL) {
-			// if we didn't get response, re-try after 2 seconds
-			DEBUG_PRINTLN(F("ntp invalid! re-try in 60 seconds"));
-			time_keeping_timeout = curr_utc_time + 60;
+		gt = time(nullptr);
+		if(gt<NTP_VALID_TIME) {
+			// we didn't get a valid response
+			if(failed_ntp_calls >= MAX_FAILED_NTP_CALLS) { // if already reached max failed calls
+				time_keeping_timeout = curr_utc_time + 60; // re-try after a minute
+				DEBUG_PRINTLN(F("max failed ntp reached! re-try in 60 seconds"));
+			} else {
+				failed_ntp_calls ++;
+				time_keeping_timeout = curr_utc_time + 2; // re-try after 2 seconds
+				DEBUG_PRINTLN(F("ntp invalid! re-try in 2 seconds"));
+			}
 		} else {
+			failed_ntp_calls = 0;
 			curr_utc_time = gt;
 			curr_utc_hour = (curr_utc_time % 86400)/3600;
 			DEBUG_PRINT(F("Updated time from NTP: "));
@@ -1461,42 +1504,43 @@ void do_loop() {
 				restart_in(10000);
 			}
 			
-	} else {
-		if(WiFi.status() == WL_CONNECTED) {
-			MDNS.update();
-			time_keeping();
-			check_status(); //This checks the door, sends info to services and processes the automation rules
-			otf->loop();
-			updateServer->handleClient();
+		} else {
+			if(WiFi.status() == WL_CONNECTED) {
+				MDNS.update();
+				time_keeping();
+				check_status(); //This checks the door, sends info to services and processes the automation rules
+				otf->loop();
+				updateServer->handleClient();
 
-			if(og.options[OPTION_CLD].ival==CLD_BLYNK)
-			  Blynk.run();
+				if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected()) {
+					Blynk.run();
+				}
 
-			//Handle MQTT
-			if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) { // if enabled and mqtt server looks valid
-				if (!mqttclient.connected()) {
-					mqtt_id = get_ap_ssid();
-					mqtt_topic = og.options[OPTION_MQTP].sval;
-					if(mqtt_topic.length()==0) mqtt_topic = og.options[OPTION_NAME].sval;
-					mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), og.options[OPTION_MQPT].ival);
-					mqttclient.setCallback(mqtt_callback); 		
-					mqtt_connect_subscribe();
+				//Handle MQTT
+				if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) { // if enabled and mqtt server looks valid
+					if (!mqttclient.connected()) {
+						mqtt_id = get_ap_ssid();
+						mqtt_topic = og.options[OPTION_MQTP].sval;
+						if(mqtt_topic.length()==0) mqtt_topic = og.options[OPTION_NAME].sval;
+						mqttclient.setServer(og.options[OPTION_MQTT].sval.c_str(), og.options[OPTION_MQPT].ival);
+						mqttclient.setCallback(mqtt_callback); 		
+						mqtt_connect_subscribe();
+						}
+						else {mqttclient.loop();} //Processes MQTT Pings/keep alives
 					}
-					else {mqttclient.loop();} //Processes MQTT Pings/keep alives
-				}
-				connecting_timeout = 0;
-			} else {
-				//og.state = OG_STATE_INITIAL;
-				if(!connecting_timeout) {
-					DEBUG_PRINTLN(F("State is CONNECTED but WiFi is disconnected, start timeout counter."));
-					connecting_timeout = millis()+60000;
-				}
-				else if(millis() > connecting_timeout) {
-					DEBUG_PRINTLN(F("timeout reached, reboot"));
-					og.restart();
+					connecting_timeout = 0;
+				} else {
+					//og.state = OG_STATE_INITIAL;
+					if(!connecting_timeout) {
+						DEBUG_PRINTLN(F("State is CONNECTED but WiFi is disconnected, start timeout counter."));
+						connecting_timeout = millis()+60000;
+					}
+					else if(millis() > connecting_timeout) {
+						DEBUG_PRINTLN(F("timeout reached, reboot"));
+						og.restart();
+					}
 				}
 			}
-		}
 		break;
 	}
 
