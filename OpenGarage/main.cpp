@@ -1512,8 +1512,9 @@ void do_loop() {
 				otf->loop();
 				updateServer->handleClient();
 
-				if(og.options[OPTION_CLD].ival==CLD_BLYNK)
-				Blynk.run();
+				if(og.options[OPTION_CLD].ival==CLD_BLYNK && Blynk.connected()) {
+					Blynk.run();
+				}
 
 				//Handle MQTT
 				if(og.options[OPTION_MQEN].ival>0 && valid_url(og.options[OPTION_MQTT].sval)) { // if enabled and mqtt server looks valid
