@@ -55,9 +55,9 @@ void start_network_ap(const char *ssid, const char *pass) {
 	if(!ssid) return;
 	DEBUG_PRINTLN(F("AP mode"));
 	if(pass)
-		WiFi.softAP(ssid, pass);
+		WiFi.softAP(ssid, pass, 1, false, 1);    // pass present forces WPA/WPA2, channel 1, not hidden, one connection
 	else
-		WiFi.softAP(ssid);
+		WiFi.softAP(ssid);          // Starts open/unencrypted (bad idea)
 	WiFi.mode(WIFI_AP_STA); // start in AP_STA mode
 	WiFi.disconnect();  // disconnect from router
 }
