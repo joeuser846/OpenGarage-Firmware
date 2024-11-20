@@ -1375,7 +1375,7 @@ void do_loop() {
 		if(curr_mode == OG_MOD_AP) {
 			scanned_ssids = scan_network();
 			String ap_ssid = get_ap_ssid();
-			start_network_ap(ap_ssid.c_str(), NULL);
+			start_network_ap(ap_ssid.c_str(), "j5k834jjj");
 			delay(500);
 			dns->setErrorReplyCode(DNSReplyCode::NoError);
 			dns->start(53, "*", WiFi.softAPIP());
