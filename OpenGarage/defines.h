@@ -28,7 +28,7 @@
 
 /** GPIO pins */
 #define PIN_RELAY   5 // D1 on nodemcu
-#define PIN_BUTTON  0
+#define PIN_BUTTON  0 // not used
 #define PIN_TRIG   12 // D6 on nodemcu
 #define PIN_ECHO   14 // D5 on nodemcu
 #define PIN_LED     2
