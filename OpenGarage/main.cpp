@@ -408,7 +408,7 @@ void sta_change_controller_main(const OTF::Request &req, OTF::Response &res) {
 		if ((close && door_status) ||
 				(open && !door_status) ||
 				(click)) {
-			DEBUG_PRINTLN(F("Valid command recieved based on door status"));
+			DEBUG_PRINTLN(F("Valid command received based on door status"));
 			if(!og.options[OPTION_ALM].ival) {
 				// if alarm is not enabled, trigger relay right away
 				og.click_relay();
