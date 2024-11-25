@@ -762,6 +762,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
 void do_setup()
 {
+	og.play_startup_tune();
 	Serial.begin(115200);
 	if(otf) {
 		delete otf;
