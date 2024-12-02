@@ -26,16 +26,16 @@
 /** Firmware version, hardware version, and maximal values */
 #define OG_FWV     123 // Firmware version: 123 means 1.2.3
 
-/** GPIO pins */
-#define PIN_RELAY   5 // D1 on nodemcu
-#define PIN_BUTTON  0 // not used
-#define PIN_ECHO   12 // D6 on nodemcu
-#define PIN_BUZZER 14 // D5 on nodemcu
+//ESP8266 GPIO pin       	// NodeMCU board label
+#define PIN_TH     16		// D0
+#define PIN_RELAY   5		// D1
+#define PIN_SWITCH  4		// D2
+#define PIN_BUZZER 14		// D5
+#define PIN_ECHO   12		// D6
+#define PIN_TRIG   13		// D7
+#define PIN_BUTTON  0		// Not present
 #define PIN_LED     2
 #define PIN_RESET  16
-#define PIN_TRIG   13 // D7 on nodemcu
-#define PIN_SWITCH  4 // switch sensor: D2 on nodemcu
-#define PIN_TH      0 // not used
 
 // Default device name
 #define DEFAULT_NAME    "My OpenGarage"
