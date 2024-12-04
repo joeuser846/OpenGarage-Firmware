@@ -62,6 +62,7 @@
 
 #define OG_SN1_CEILING  0x00 // SN1 is built-in ultrasonic sensor
 #define OG_SN1_SIDE     0x01
+#define OG_SN1_OPENER	0x02
 
 #define OG_SN2_NONE     0x00 // SN2 is optional switch sensor
 #define OG_SN2_NC       0x01 // NC: normally closed

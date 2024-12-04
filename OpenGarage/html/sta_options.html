@@ -16,6 +16,7 @@
 <select name='sn1' id='sn1' data-mini='true'>
 <option value=0>Ceiling Mount</option>
 <option value=1>Side Mount</option>
+<option value=2>Opener Mount</option>
 </select></td></tr>
 <tr><td><b>Door Thres. (cm): </b></td><td><input type='text' size=3 maxlength=4 id='dth' data-mini='true' value=0></td></tr>
 <tr><td><b>Car Thres. (cm):</b><br><small>set to 0 to disable</small></td><td><input type='text' size=3 maxlength=4 id='vth' data-mini='true' value=0 ></td></tr>
@@ -29,10 +30,10 @@
 </select></td></tr>
 <tr><td><b>Sensor Logic:</b><a href='#snoInfo' data-rel='popup' data-role='button' data-inline='true' data-transition='pop' data-icon='info' data-theme='c' data-iconpos='notext'>Explanation</a><div data-role='popup' id='snoInfo' class='ui-content' data-theme='b' style='max-width:250px;'><p>Choose which sensor(s) determine door 'open' status.</p></div></td><td>
 <select name='sno' id='sno' data-mini='true' disabled='true'>
-<option value=0>Dist. sensor only</option>
-<option value=1>Switch sensor only</option>
-<option value=2>Dist. AND Switch</option>
-<option value=3>Dist. OR Switch</option>
+<option value=0>Sonar only</option>
+<option value=1>Door switch only</option>
+<option value=2>Sonar AND Door</option>
+<option value=3>Sonar OR Door</option>
 </select></td></tr>
 <tr><td><b>T/H Sensor:</b></td><td>
 <select name='tsn' id='tsn' data-mini='true'>

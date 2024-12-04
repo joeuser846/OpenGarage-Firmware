@@ -1159,6 +1159,7 @@ void check_status() {
 		uint vth = og.options[OPTION_VTH].ival;
 		bool sn1_status;
 		distance = og.read_distance();
+
 		if((distance==0 || distance>500 || !fullbuffer) && og.options[OPTION_SNO].ival!=OG_SNO_2ONLY) {
 			// invalid distance value or non full buffer, return immediately except if using SN2 only
 			DEBUG_PRINTLN(F("invalid distance or non-full buffer"));
@@ -1166,20 +1167,26 @@ void check_status() {
 			return; 
 		}
 		
-		sn1_status = (distance>dth)?0:1;
-		if(og.options[OPTION_SN1].ival == OG_SN1_SIDE) {
-			sn1_status = 1-sn1_status; // reverse logic for side mount
+		if(og.options[OPTION_SN1].ival == OG_SN1_OPENER && vth>0)		// Can detect car but not door
+			vehicle_status = ((distance>dth) && (distance <=vth)) ? OG_VEH_PRESENT:OG_VEH_ABSENT;
+		else
+			if(og.options[OPTION_SN1].ival == OG_SN1_SIDE) {
+				sn1_status = 1-sn1_status; // reverse logic for side mount
 			// for side-mount, we can't decide vehicle status
-			vehicle_status = OG_VEH_NOTAVAIL;
-		} else {
-		  if (vth>0) {
-				if(!sn1_status) {
+				vehicle_status = OG_VEH_NOTAVAIL;
+				}
+			else
+				if (og.options[OPTION_SN1].ival == OG_SN1_CEILING && vth>0) {				// Ceiling mount 
+					sn1_status = (distance>dth)?0:1;
+					if(!sn1_status)
 					// if vehicle distance threshold is defined and door is closed (i.e. not blocking view of vehicle)
 					// vehicle status can be determined by checking if distance is within bracket [dth, vth]
-					vehicle_status = ((distance>dth) && (distance <=vth)) ? OG_VEH_PRESENT:OG_VEH_ABSENT;
-				} else { vehicle_status = OG_VEH_UNKNOWN; }	// door is open, blocking view of vehicle
-			} else {vehicle_status = OG_VEH_NOTAVAIL;} // vth undefined
-		}
+						vehicle_status = ((distance>dth) && (distance <=vth)) ? OG_VEH_PRESENT:OG_VEH_ABSENT;
+					else 
+						vehicle_status = OG_VEH_UNKNOWN;	// door is open, blocking view of vehicle
+				} else
+					vehicle_status = OG_VEH_NOTAVAIL; 		// vth undefined
+		
 		
 		// Read SN2 -- optional switch sensor
 		sn2_value = og.get_switch();
