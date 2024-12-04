@@ -38,7 +38,10 @@ extern OpenGarage og;
 /* Options name, default integer value, max value, default string value
  * Integer options don't have string value
  * String options don't have integer or max value
+ * 
+ * IMPORTANT: You must run html2raw before compiling to copy .html files into htmls.h
  */
+
 OptionStruct OpenGarage::options[] = {
 	{"fwv", OG_FWV,      255, ""},
 	{"sn1", OG_SN1_CEILING,2, ""},
