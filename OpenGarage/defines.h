@@ -30,10 +30,10 @@
 #define PIN_TH     16		// D0
 #define PIN_RELAY   5		// D1
 #define PIN_SWITCH  4		// D2
+#define PIN_BUTTON  0		// D3
 #define PIN_BUZZER 14		// D5
 #define PIN_ECHO   12		// D6
 #define PIN_TRIG   13		// D7
-#define PIN_BUTTON  0		// Not present
 #define PIN_LED     2
 #define PIN_RESET  16
 
