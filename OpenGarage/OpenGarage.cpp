@@ -338,15 +338,15 @@ void OpenGarage::init_sensors() {
 		break;
 	case OG_TSN_DHT11:
 		dht = new DHTesp();
-		dht->setup(PIN_TH, DHTesp::DHT11);
+		dht->setup(PIN_TEMP, DHTesp::DHT11);
 		break;
 	case OG_TSN_DHT22:
 		dht = new DHTesp();
-		dht->setup(PIN_TH, DHTesp::DHT22);    
+		dht->setup(PIN_TEMP, DHTesp::DHT22);    
 		break;
 
 	case OG_TSN_DS18B20:
-		OneWire *oneWire = new OneWire(PIN_TH);
+		OneWire *oneWire = new OneWire(PIN_TEMP);
 		ds18b20 = new DallasTemperature(oneWire);
 		ds18b20->begin();
 		break;

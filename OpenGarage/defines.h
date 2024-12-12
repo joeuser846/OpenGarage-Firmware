@@ -27,7 +27,7 @@
 #define OG_FWV     123 // Firmware version: 123 means 1.2.3
 
 //ESP8266 GPIO pin       	// NodeMCU board label
-#define PIN_TH     16		// D0
+#define PIN_TEMP   16		// D0
 #define PIN_RELAY   5		// D1
 #define PIN_SWITCH  4		// D2
 #define PIN_BUTTON  0		// D3
